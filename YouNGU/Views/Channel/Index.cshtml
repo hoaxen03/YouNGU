@@ -1,0 +1,150 @@
+﻿<!-- Views/Channel/Index.cshtml -->
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model YouNGU.Models.ViewModels.ChannelViewModel
+@{
+    ViewData["Title"] = Model.User.FullName ?? Model.User.UserName;
+}
+
+<div class="container">
+    <!-- Channel Header -->
+    <div class="channel-header bg-light p-4 rounded mb-4">
+        <div class="row">
+            <div class="col-md-8 d-flex">
+                <img src="@Url.Content($"~/uploads/avatars/{Model.User.AvatarPath}")" alt="@Model.User.UserName" class="rounded-circle me-4" width="80" height="80">
+                <div>
+                    <h1 class="mb-1">@(Model.User.FullName ?? Model.User.UserName)</h1>
+                    <p class="text-muted mb-2">@Model.SubscriberCount người đăng ký</p>
+                    <p class="mb-0">@Model.User.Description</p>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                @if (User.Identity.IsAuthenticated && User.FindFirst(ClaimTypes.NameIdentifier).Value != Model.User.Id)
+                {
+                    <button class="btn @(Model.IsSubscribed ? "btn-secondary" : "btn-danger")"
+                            id="subscribeButton"
+                            data-user-id="@Model.User.Id">
+                        @(Model.IsSubscribed ? "Đã đăng ký" : "Đăng ký")
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Channel Navigation -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link active" href="#">Video</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Playlist</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Giới thiệu</a>
+        </li>
+    </ul>
+
+    <!-- Channel Videos -->
+    <div class="row">
+        @if (!Model.Videos.Any())
+        {
+            <div class="col-12">
+                <div class="alert alert-info">
+                    Kênh này chưa có video nào.
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var video in Model.Videos)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <a asp-controller="Video" asp-action="Watch" asp-route-id="@video.Id">
+                            <img src="@video.ThumbnailUrl" class="card-img-top" alt="@video.Title">                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a asp-controller="Video" asp-action="Watch" asp-route-id="@video.Id" class="text-decoration-none text-dark">
+                                    @video.Title
+                                </a>
+                            </h5>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    @video.ViewCount lượt xem • @((DateTime.UtcNow - video.CreatedAt).TotalDays < 1 ? "hôm nay" : $"{(int)(DateTime.UtcNow - video.CreatedAt).TotalDays} ngày trước")
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- Public Playlists -->
+    @if (Model.PublicPlaylists != null && Model.PublicPlaylists.Any())
+    {
+        <h2 class="mt-5 mb-4">Playlist</h2>
+        <div class="row">
+            @foreach (var playlist in Model.PublicPlaylists)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a asp-controller="Playlist" asp-action="View" asp-route-id="@playlist.Id" class="text-decoration-none">
+                                    @playlist.Name
+                                </a>
+                            </h5>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    @playlist.PlaylistVideos.Count() video •
+                                    Tạo ngày @playlist.CreatedAt.ToString("dd/MM/yyyy")
+                                </small>
+                            </p>
+                        </div>
+                        <div class="card-footer">
+                            <a asp-controller="Playlist" asp-action="View" asp-route-id="@playlist.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-play-fill"></i> Phát
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Xử lý đăng ký kênh
+        const subscribeButton = document.getElementById('subscribeButton');
+        if (subscribeButton) {
+            subscribeButton.addEventListener('click', function() {
+                const publisherId = this.getAttribute('data-user-id');
+
+                fetch('@Url.Action("ToggleSubscription", "Channel")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ publisherId: publisherId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.isSubscribed) {
+                            this.classList.remove('btn-danger');
+                            this.classList.add('btn-secondary');
+                            this.textContent = 'Đã đăng ký';
+                        } else {
+                            this.classList.remove('btn-secondary');
+                            this.classList.add('btn-danger');
+                            this.textContent = 'Đăng ký';
+                        }
+                    }
+                });
+            });
+        }
+    </script>
+}

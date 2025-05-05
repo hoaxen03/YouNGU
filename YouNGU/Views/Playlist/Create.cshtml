@@ -1,0 +1,47 @@
+﻿&lt;!-- Views/Playlist/Create.cshtml -->
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model YouNGU.Models.ViewModels.CreatePlaylistViewModel
+@{
+    ViewData["Title"] = "Tạo playlist mới";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="h4 mb-0">Tạo playlist mới</h1>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Tên playlist</label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="IsPublic" class="form-check-input" />
+                                <label asp-for="IsPublic" class="form-check-label">Công khai</label>  />
+                                <label asp-for="IsPublic" class="form-check-label">Công khai</label>
+                                <small class="form-text text-muted">Playlist công khai có thể được xem bởi tất cả mọi người.</small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <a asp-action="Index" class="btn btn-secondary me-2">Hủy</a>
+                            <button type="submit" class="btn btn-primary">Tạo playlist</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,60 @@
+﻿@model IEnumerable<YouNGU.Models.Entities.Video>
+
+<div class="container">
+    <h1 class="my-4">Danh sách video</h1>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i> Không có video nào trong danh mục này.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var video in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <a asp-controller="Video" asp-action="Watch" asp-route-id="@video.Id">
+                            @if (!string.IsNullOrEmpty(video.ThumbnailUrl))
+                            {
+                                <!-- Sử dụng Cloudinary URL nếu có -->
+                                <img src="@video.ThumbnailUrl" class="card-img-top" alt="@video.Title">
+                            }
+                            else if (!string.IsNullOrEmpty(video.ThumbnailPath))
+                            {
+                                <!-- Sử dụng local path nếu không có Cloudinary URL -->
+                                <img src="@Url.Content($"~/uploads/thumbnails/{video.ThumbnailPath}")" class="card-img-top" alt="@video.Title">
+                            }
+                            else
+                            {
+                                <!-- Sử dụng placeholder nếu không có thumbnail -->
+                                <img src="@Url.Content("~/images/default-thumbnail.jpg")" class="card-img-top" alt="@video.Title">
+                            }
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a asp-controller="Video" asp-action="Watch" asp-route-id="@video.Id" class="text-decoration-none text-dark">
+                                    @video.Title
+                                </a>
+                            </h5>
+                            <p class="card-text text-muted">
+                                <a asp-controller="Channel" asp-action="Index" asp-route-id="@video.UserId" class="text-decoration-none">
+                                    @video.User.UserName
+                                </a>
+                            </p>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    @video.ViewCount lượt xem • @((DateTime.UtcNow - video.CreatedAt).TotalDays < 1 ? "hôm nay" : $"{(int)(DateTime.UtcNow - video.CreatedAt).TotalDays} ngày trước")
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+

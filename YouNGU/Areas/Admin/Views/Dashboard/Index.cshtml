@@ -1,0 +1,147 @@
+﻿@* Kế thừa từ ViewModel đã tạo *@
+@model YouNGU.Areas.Admin.Models.AdminDashboardViewModel
+@* Đặt Layout cho trang này (Layout này sẽ chứa Sidebar) *@
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    // Đảm bảo đường dẫn này đúng với vị trí file _AdminLayout.cshtml của bạn
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+
+    // Hàm trợ giúp định dạng phần trăm thay đổi
+    string FormatPercentage(double percentage)
+    {
+        // Bạn có thể tùy chỉnh định dạng ở đây nếu muốn (ví dụ: làm tròn)
+        return percentage >= 0 ? $"+{percentage:N1}%" : $"{percentage:N1}%"; // Hiển thị 1 chữ số thập phân
+    }
+    // Hàm trợ giúp lấy CSS class cho phần trăm thay đổi (Bootstrap)
+    string GetPercentageClass(double percentage)
+    {
+        return percentage >= 0 ? "text-success" : "text-danger"; // Sử dụng class text-success/text-danger của Bootstrap
+    }
+}
+
+@* Phần nội dung chính của trang Dashboard *@
+<div class="container-fluid px-4">
+    @* Sử dụng container-fluid để chiếm toàn bộ chiều rộng trong main content *@
+    <h2 class="mt-4 mb-4">Dashboard</h2> @* Thêm margin top/bottom cho tiêu đề *@
+
+    @* Stats Cards - Sử dụng Bootstrap Grid và Cards *@
+    <div class="row g-4 mb-4">
+        @* Sử dụng row và gap (g-4) *@
+
+        @* Card Tổng số video *@
+        <div class="col-xl-3 col-md-6">
+            @* Responsive columns *@
+            <div class="card shadow-sm h-100">
+                @* Thêm shadow-sm và h-100 để thẻ cao bằng nhau *@
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="card-subtitle text-muted text-uppercase small">Tổng số video</h6>
+                        <i class="bi bi-camera-video fs-4 text-primary opacity-75"></i> @* Icon ví dụ *@
+                    </div>
+                    <h4 class="card-title fw-bold mb-1">@Model.TotalVideos.ToString("N0")</h4>
+                    <small class="@GetPercentageClass(Model.VideoChangePercentage)">
+                        <i class="bi @(Model.VideoChangePercentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatPercentage(Model.VideoChangePercentage) so với tháng trước
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        @* Card Tổng số người dùng *@
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="card-subtitle text-muted text-uppercase small">Tổng số người dùng</h6>
+                        <i class="bi bi-people fs-4 text-info opacity-75"></i> @* Icon ví dụ *@
+                    </div>
+                    <h4 class="card-title fw-bold mb-1">@Model.TotalUsers.ToString("N0")</h4>
+                    <small class="@GetPercentageClass(Model.UserChangePercentage)">
+                        <i class="bi @(Model.UserChangePercentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatPercentage(Model.UserChangePercentage) so với tháng trước
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        @* Card Lượt xem *@
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="card-subtitle text-muted text-uppercase small">Lượt xem</h6>
+                        <i class="bi bi-eye fs-4 text-warning opacity-75"></i> @* Icon ví dụ *@
+                    </div>
+                    <h4 class="card-title fw-bold mb-1">@Model.TotalViewsFormatted</h4> @* Giữ nguyên định dạng từ ViewModel *@
+                    <small class="@GetPercentageClass(Model.ViewChangePercentage)">
+                        <i class="bi @(Model.ViewChangePercentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                        @FormatPercentage(Model.ViewChangePercentage) so với tháng trước
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        @* Card Dung lượng lưu trữ *@
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="card-subtitle text-muted text-uppercase small">Dung lượng lưu trữ</h6>
+                        <i class="bi bi-hdd fs-4 text-danger opacity-75"></i> @* Icon ví dụ *@
+                    </div>
+                    <h4 class="card-title fw-bold mb-1">@Model.StorageUsedFormatted</h4>
+                    <small class="text-danger">
+                        @* Luôn hiển thị màu đỏ cho dung lượng *@
+                        @Model.StorageUsagePercentage% dung lượng đã sử dụng
+                    </small>
+                    @* Optional: Thêm progress bar *@
+                    <div class="progress mt-2" style="height: 5px;">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: @Model.StorageUsagePercentage%;" aria-valuenow="@Model.StorageUsagePercentage" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Recent Videos Table - Sử dụng Partial View trong Card *@
+    <div class="card shadow-sm mb-4">
+        @* Bọc bảng trong card *@
+        <div class="card-header">
+            @* Thêm card header *@
+            <i class="bi bi-table me-1"></i> Video mới đăng
+        </div>
+        <div class="card-body">
+            @* Render Partial View và truyền danh sách video vào *@
+            @* Quan trọng: Đảm bảo _RecentVideosTable.cshtml cũng sử dụng class Bootstrap *@
+            @await Html.PartialAsync("_RecentVideosTable", Model.RecentVideos)
+        </div>
+    </div>
+
+    @* Recent Users Table - Sử dụng Partial View trong Card *@
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <i class="bi bi-table me-1"></i> Người dùng mới đăng ký
+        </div>
+        <div class="card-body">
+            @* Render Partial View và truyền danh sách người dùng vào *@
+            @* Quan trọng: Đảm bảo _RecentUsersTable.cshtml cũng sử dụng class Bootstrap *@
+            @await Html.PartialAsync("_RecentUsersTable", Model.RecentUsers)
+        </div>
+    </div>
+
+</div> @* End container-fluid *@
+
+@* Section Scripts giữ nguyên, không cần thay đổi trừ khi bạn muốn thêm JS cụ thể cho Bootstrap *@
+@section Scripts {
+    <script>
+        // Ví dụ: Khởi tạo tooltips hoặc popovers của Bootstrap nếu bạn sử dụng chúng
+        // var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        // var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        //   return new bootstrap.Tooltip(tooltipTriggerEl)
+        // })
+
+        // Xử lý dropdown menu trong bảng (nếu dùng dropdown của Bootstrap)
+        // Cần đảm bảo các partial view (_RecentVideosTable, _RecentUsersTable)
+        // cũng được cập nhật để sử dụng cấu trúc dropdown của Bootstrap nếu cần JS.
+    </script>
+}

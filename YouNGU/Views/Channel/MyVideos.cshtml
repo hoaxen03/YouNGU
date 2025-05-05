@@ -1,0 +1,111 @@
+﻿<!-- Views/Channel/MyVideos.cshtml -->
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using YouNGU.Models.Entities
+@model IEnumerable<YouNGU.Models.Entities.Video>
+@{
+    ViewData["Title"] = "Video của tôi";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Video của tôi</h1>
+        <a asp-controller="Video" asp-action="Upload" class="btn btn-primary">
+            <i class="bi bi-upload"></i> Tải lên video
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            Bạn chưa có video nào. <a asp-controller="Video" asp-action="Upload">Tải lên video</a> ngay!
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Video</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày đăng</th>
+                        <th>Lượt xem</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var video in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="@video.ThumbnailUrl" alt="@video.Title" width="120" height="68" class="rounded me-3">
+                                    <div>
+                                        <h6 class="mb-0">@video.Title</h6>
+                                        <small class="text-muted">@(video.Description?.Length > 50 ? video.Description.Substring(0, 50) + "..." : video.Description)</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @switch (video.Status)
+                                {
+                                    case VideoStatus.Published:
+                                        <span class="badge bg-success">Đã xuất bản</span>
+                                        break;
+                                    case VideoStatus.Processing:
+                                        <span class="badge bg-warning text-dark">Đang xử lý</span>
+                                        break;
+                                    case VideoStatus.Private:
+                                        <span class="badge bg-secondary">Riêng tư</span>
+                                        break;
+                                    case VideoStatus.Unlisted:
+                                        <span class="badge bg-info">Không công khai</span>
+                                        break;
+                                    case VideoStatus.Deleted:
+                                        <span class="badge bg-danger">Đã xóa</span>
+                                        break;
+                                }
+                            </td>
+                            <td>@video.CreatedAt.ToString("dd/MM/yyyy")</td>
+                            <td>@video.ViewCount</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a asp-controller="Video" asp-action="Watch" asp-route-id="@video.Id" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-play-fill"></i>
+                                    </a>
+                                    <a asp-controller="Video" asp-action="Edit" asp-route-id="@video.Id" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@video.Id">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteModal-@video.Id" tabindex="-1" aria-labelledby="deleteModalLabel-@video.Id" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteModalLabel-@video.Id">Xác nhận xóa</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Bạn có chắc chắn muốn xóa video "<strong>@video.Title</strong>"?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                <form asp-controller="Video" asp-action="Delete" asp-route-id="@video.Id" method="post">
+                                                    <button type="submit" class="btn btn-danger">Xóa</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

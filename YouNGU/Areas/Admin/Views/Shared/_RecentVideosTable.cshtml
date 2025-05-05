@@ -1,0 +1,134 @@
+﻿@* Kế thừa danh sách video từ Model chính *@
+@model List<YouNGU.Areas.Admin.Models.RecentVideoViewModel>
+@* Inject các helper nếu cần, ví dụ IUrlHelper *@
+@inject Microsoft.AspNetCore.Mvc.IUrlHelper Url
+
+@{
+    // Hàm trợ giúp định dạng ngày tháng
+    string FormatDate(DateTime date)
+    {
+        return date.ToString("dd/MM/yyyy");
+    }
+
+    // Hàm trợ giúp lấy CSS class cho status badge
+    string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Đã xuất bản" => "bg-green-100 text-green-800",
+            "Đang xử lý" => "bg-yellow-100 text-yellow-800",
+            "Bị từ chối" => "bg-red-100 text-red-800",
+            _ => "bg-gray-100 text-gray-800", // Mặc định
+        };
+    }
+}
+
+<div class="overflow-x-auto">
+    <table class="w-full">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Video
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Người đăng
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ngày đăng
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Trạng thái
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Lượt xem
+                </th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Thao tác
+                </th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var video in Model)
+                {
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <img src="@(Url.Content(video.ThumbnailUrl ?? "~/images/placeholder-thumb.png"))"
+                                     alt="Video thumbnail"
+                                     class="w-16 h-9 rounded object-cover mr-3 flex-shrink-0"
+                                     onerror="this.onerror=null; this.src='@Url.Content("~/images/placeholder-thumb.png")';" />
+                                <span class="font-medium text-sm truncate" title="@video.Title">@video.Title</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            @* Link đến trang người dùng/kênh nếu có UserId *@
+                            @if (!string.IsNullOrEmpty(video.UserId))
+                            {
+                                <a asp-area="" asp-controller="Channel" asp-action="Index" asp-route-id="@video.UserId" class="text-blue-600 hover:underline" target="_blank">
+                                    @video.UploaderName
+                                </a>
+                            }
+                            else
+                            {
+                                @video.UploaderName
+                            }
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">@FormatDate(video.CreatedAt)</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full @GetStatusBadgeClass(video.Status)">
+                                @video.Status
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">@video.ViewCount.ToString("N0")</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            @* Dropdown Menu (HTML/CSS đơn giản, cần JS để hoạt động đầy đủ) *@
+                            <div class="relative inline-block text-left dropdown">
+                                <button type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-2 py-1 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                                <div class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden dropdown-menu z-10" role="menu" aria-orientation="vertical" aria-labelledby="menu-button">
+                                    <div class="py-1" role="none">
+                                        <a asp-area="Admin" asp-controller="Videos" asp-action="Edit" asp-route-id="@video.Id" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">
+                                            <i class="fa-solid fa-pen-to-square mr-2"></i>Chỉnh sửa
+                                        </a>
+                                        @* Nút xóa thường cần xác nhận JS *@
+                                        <button type="button" data-id="@video.Id" class="text-red-600 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 delete-video-btn" role="menuitem">
+                                            <i class="fa-solid fa-trash-can mr-2"></i>Xóa
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">Không có video nào gần đây.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@* Thêm script vào section nếu partial view này cần JS riêng *@
+@*
+@section Scripts {
+    <script>
+        // JS cho nút xóa video (ví dụ)
+        document.querySelectorAll('.delete-video-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const videoId = this.getAttribute('data-id');
+                if(confirm(`Bạn có chắc chắn muốn xóa video ID: ${videoId}?`)) {
+                    // Gọi action xóa bằng fetch hoặc form submit
+                    console.log('Xóa video:', videoId);
+                    // Ví dụ: window.location.href = `/Admin/Videos/Delete/${videoId}`;
+                }
+            });
+        });
+    </script>
+}
+*@

@@ -1,0 +1,58 @@
+﻿&lt;!-- Views/Playlist/Index.cshtml -->
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model IEnumerable<YouNGU.Models.Entities.Playlist>
+@{
+    ViewData["Title"] = "Danh sách playlist";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Playlist của tôi</h1>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Tạo playlist mới
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            Bạn chưa có playlist nào. <a asp-action="Create">Tạo playlist mới</a> ngay!
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var playlist in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a asp-action="View" asp-route-id="@playlist.Id" class="text-decoration-none">
+                                    @playlist.Name
+                                </a>
+                            </h5>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    @playlist.PlaylistVideos.Count() video •
+                                    @(playlist.IsPublic ? "Công khai" : "Riêng tư") •
+                                    Tạo ngày @playlist.CreatedAt.ToString("dd/MM/yyyy")
+                                </small>
+                            </p>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <a asp-action="View" asp-route-id="@playlist.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-play-fill"></i> Phát
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@playlist.Id" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa playlist này?')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i> Xóa
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

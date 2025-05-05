@@ -1,0 +1,159 @@
+﻿&lt;!-- Views/Playlist/View.cshtml -->
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model YouNGU.Models.ViewModels.PlaylistViewModel
+@{
+    ViewData["Title"] = Model.Playlist.Name;
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <h1 class="mb-3">@Model.Playlist.Name</h1>
+            <p class="text-muted">
+                <span>@Model.Videos.Count() video</span> •
+                <span>@(Model.Playlist.IsPublic ? "Công khai" : "Riêng tư")</span> •
+                <span>Tạo bởi <a asp-controller="Channel" asp-action="Index" asp-route-id="@Model.Playlist.UserId">@Model.Playlist.User.UserName</a></span>
+            </p>
+
+            @if (Model.IsOwner)
+            {
+                <div class="mb-4">
+                    <a asp-action="Edit" asp-route-id="@Model.Playlist.Id" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil"></i> Chỉnh sửa
+                    </a>
+                    <form asp-action="Delete" asp-route-id="@Model.Playlist.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa playlist này?')">
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-trash"></i> Xóa
+                        </button>
+                    </form>
+                </div>
+            }
+
+            @if (!Model.Videos.Any())
+            {
+                <div class="alert alert-info">
+                    Playlist này chưa có video nào.
+                </div>
+            }
+            else
+            {
+                <div class="list-group">
+                    @foreach (var video in Model.Videos)
+                    {
+                        <div class="list-group-item d-flex">
+                            <a asp-controller="Video" asp-action="Watch" asp-route-id="@video.Id" class="me-3">
+                                <img src="@video.ThumbnailUrl" alt="@video.Title" width="120" height="68" class="rounded">
+                            </a>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">
+                                    <a asp-controller="Video" asp-action="Watch" asp-route-id="@video.Id" class="text-decoration-none">
+                                        @video.Title
+                                    </a>
+                                </h5>
+                                <p class="mb-1 text-muted">
+                                    <a asp-controller="Channel" asp-action="Index" asp-route-id="@video.UserId" class="text-decoration-none">
+                                        @video.User.UserName
+                                    </a>
+                                </p>
+                                <small class="text-muted">
+                                    @video.ViewCount lượt xem • @((DateTime.UtcNow - video.CreatedAt).TotalDays < 1 ? "hôm nay" : $"{(int)(DateTime.UtcNow - video.CreatedAt).TotalDays} ngày trước")
+                                </small>
+                            </div>
+                            @if (Model.IsOwner)
+                            {
+                                <button class="btn btn-sm btn-outline-danger remove-video" data-video-id="@video.Id">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Playlist khác</h5>
+                </div>
+                <div class="card-body">
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <div id="userPlaylists" class="list-group">
+                            <!-- Danh sách playlist sẽ được load bằng AJAX -->
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <a asp-area="Identity" asp-page="/Account/Login">Đăng nhập</a> để xem playlist của bạn.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (Model.IsOwner)
+    {
+        <script>
+            // Xóa video khỏi playlist
+            document.querySelectorAll('.remove-video').forEach(button => {
+                button.addEventListener('click', function() {
+                    const videoId = this.getAttribute('data-video-id');
+                    if (confirm('Bạn có chắc chắn muốn xóa video này khỏi playlist?')) {
+                        fetch('@Url.Action("RemoveVideo", "Playlist")', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify({
+                                playlistId: @Model.Playlist.Id,
+                                videoId: videoId
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Xóa phần tử khỏi DOM
+                                this.closest('.list-group-item').remove();
+                            }
+                        });
+                    }
+                });
+            });
+        </script>
+    }
+
+    @if (User.Identity.IsAuthenticated)
+    {
+        <script>
+            // Load danh sách playlist của người dùng
+            fetch('@Url.Action("GetUserPlaylists", "Api")')
+                .then(response => response.json())
+                .then(data => {
+                    const playlistsContainer = document.getElementById('userPlaylists');
+                    playlistsContainer.innerHTML = '';
+
+                    if (data.length === 0) {
+                        playlistsContainer.innerHTML = '<div class="alert alert-info">Bạn chưa có playlist nào.</div>';
+                        return;
+                    }
+
+                    data.forEach(playlist => {
+                        const item = document.createElement('a');
+                        item.href = '@Url.Action("View", "Playlist")/' + playlist.id;
+                        item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                        item.innerHTML = `
+                            ${playlist.name}
+                            <span class="badge bg-primary rounded-pill">${playlist.videoCount}</span>
+                        `;
+                        playlistsContainer.appendChild(item);
+                    });
+                });
+        </script>
+    }
+}

@@ -1,0 +1,151 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model YouNGU.Models.ViewModels.HomeViewModel
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<div class="container">
+    <h1 class="my-4">Video mới nhất</h1>
+
+    @if (Model.RecentVideos == null || !Model.RecentVideos.Any())
+    {
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle me-2"></i> Hiện chưa có video mới nào.
+            @if (User.Identity.IsAuthenticated)
+            {
+                <a asp-controller="Video" asp-action="Upload" class="alert-link">Tải lên video đầu tiên</a>
+            }
+            else
+            {
+                <a asp-area="Identity" asp-page="/Account/Login" class="alert-link">Đăng nhập để tải lên video.</a>
+        }
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var video in Model.RecentVideos)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <a asp-controller="Video" asp-action="Watch" asp-route-id="@video.Id">
+                            @if (!string.IsNullOrEmpty(video.ThumbnailUrl))
+                            {
+                                <!-- Sử dụng Cloudinary URL nếu có -->
+                                <img src="@video.ThumbnailUrl" class="card-img-top" alt="@video.Title">
+                            }
+                            else if (!string.IsNullOrEmpty(video.ThumbnailPath))
+                            {
+                                <!-- Sử dụng local path nếu không có Cloudinary URL -->
+                                <img src="@Url.Content($"~/uploads/thumbnails/{video.ThumbnailPath}")" class="card-img-top" alt="@video.Title">
+                            }
+                            else
+                            {
+                                <!-- Sử dụng placeholder nếu không có thumbnail -->
+                                <img src="@Url.Content("~/images/default-thumbnail.jpg")" class="card-img-top" alt="@video.Title">
+                            }
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a asp-controller="Video" asp-action="Watch" asp-route-id="@video.Id" class="text-decoration-none text-dark">
+                                    @video.Title
+                                </a>
+                            </h5>
+                            <p class="card-text text-muted">
+                                <a asp-controller="Channel" asp-action="Index" asp-route-id="@video.UserId" class="text-decoration-none">
+                                    @video.User.UserName
+                                </a>
+                            </p>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    @video.ViewCount lượt xem • @((DateTime.UtcNow - video.CreatedAt).TotalDays < 1 ? "hôm nay" : $"{(int)(DateTime.UtcNow - video.CreatedAt).TotalDays} ngày trước")
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <h2 class="my-4">Video phổ biến</h2>
+
+    @if (Model.PopularVideos == null || !Model.PopularVideos.Any())
+    {
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle me-2"></i> Hiện chưa có video phổ biến nào.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var video in Model.PopularVideos.Take(6))
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <a asp-controller="Video" asp-action="Watch" asp-route-id="@video.Id">
+                            @if (!string.IsNullOrEmpty(video.ThumbnailUrl))
+                            {
+                                <!-- Sử dụng Cloudinary URL nếu có -->
+                                <img src="@video.ThumbnailUrl" class="card-img-top" alt="@video.Title">
+                            }
+                            else if (!string.IsNullOrEmpty(video.ThumbnailPath))
+                            {
+                                <!-- Sử dụng local path nếu không có Cloudinary URL -->
+                                <img src="@Url.Content($"~/uploads/thumbnails/{video.ThumbnailPath}")" class="card-img-top" alt="@video.Title">
+                            }
+                            else
+                            {
+                                <!-- Sử dụng placeholder nếu không có thumbnail -->
+                                <img src="@Url.Content("~/images/default-thumbnail.jpg")" class="card-img-top" alt="@video.Title">
+                            }
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a asp-controller="Video" asp-action="Watch" asp-route-id="@video.Id" class="text-decoration-none text-dark">
+                                    @video.Title
+                                </a>
+                            </h5>
+                            <p class="card-text text-muted">
+                                <a asp-controller="Channel" asp-action="Index" asp-route-id="@video.UserId" class="text-decoration-none">
+                                    @video.User.UserName
+                                </a>
+                            </p>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    @video.ViewCount lượt xem • @((DateTime.UtcNow - video.CreatedAt).TotalDays < 1 ? "hôm nay" : $"{(int)(DateTime.UtcNow - video.CreatedAt).TotalDays} ngày trước")
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <h2 class="my-4">Danh mục</h2>
+
+    @if (Model.Categories == null || !Model.Categories.Any())
+    {
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle me-2"></i> Hiện chưa có danh mục nào.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var category in Model.Categories)
+            {
+                <div class="col-md-3 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">@category.Name</h5>
+                            <p class="card-text">@category.Description</p>
+                            <a asp-controller="Category" asp-action="Videos" asp-route-id="@category.Id" class="btn btn-primary">Xem video</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

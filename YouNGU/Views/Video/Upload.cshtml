@@ -1,0 +1,469 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model YouNGU.Models.ViewModels.UploadVideoViewModel
+@{
+    ViewData["Title"] = "Tải lên video";
+}
+
+<div class="container">
+    <h1 class="mb-4">Tải lên video</h1>
+    <!-- Hiển thị thông báo lỗi từ TempData -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger mb-4">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Hiển thị thông báo thành công từ TempData -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success mb-4">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+    <!-- Hiển thị trạng thái kết nối -->
+    <div id="connectionStatus" class="alert alert-info mb-4">
+        <i class="bi bi-wifi me-2"></i> Đang kiểm tra kết nối...
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Upload" method="post" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">Tiêu đề</label>
+                            <input asp-for="Title" class="form-control" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Mô tả</label>
+                            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CategoryId" class="form-label">Danh mục</label>
+                            <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select"></select>
+                            <span asp-validation-for="CategoryId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Tags" class="form-label">Thẻ (phân cách bằng dấu phẩy)</label>
+                            <input asp-for="Tags" class="form-control" />
+                            <span asp-validation-for="Tags" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="VideoFile" class="form-label">File video</label>
+                            <input asp-for="VideoFile" type="file" class="form-control" accept="video/*" />
+                            <span asp-validation-for="VideoFile" class="text-danger"></span>
+                            <small class="form-text text-muted">Định dạng hỗ trợ: MP4, WebM, Ogg. Kích thước tối đa: 500MB.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ThumbnailFile" class="form-label">Hình thumbnail</label>
+                            <input asp-for="ThumbnailFile" type="file" class="form-control" accept="image/*" />
+                            <span asp-validation-for="ThumbnailFile" class="text-danger"></span>
+                            <small class="form-text text-muted">Định dạng hỗ trợ: JPG, PNG. Kích thước tối đa: 2MB.</small>
+                        </div>
+
+                        <!-- Tùy chọn Cloudinary -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">Tùy chọn Cloudinary</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label asp-for="VideoQuality" class="form-label">Chất lượng video</label>
+                                    <select asp-for="VideoQuality" class="form-select">
+                                        <option value="auto">Tự động</option>
+                                        <option value="low">Thấp (360p)</option>
+                                        <option value="medium">Trung bình (720p)</option>
+                                        <option value="high">Cao (1080p)</option>
+                                    </select>
+                                </div>
+                        
+                                <div class="mb-3">
+                                    <label asp-for="VideoFormat" class="form-label">Định dạng video</label>
+                                    <select asp-for="VideoFormat" class="form-select">
+                                        <option value="auto">Tự động</option>
+                                        <option value="mp4">MP4</option>
+                                        <option value="webm">WebM</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="IsPublic" class="form-check-input" />
+                                <label asp-for="IsPublic" class="form-check-label">Công khai</label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-secondary me-2">Hủy</a>
+                            <button type="submit" class="btn btn-primary" id="uploadButton">
+                                <i class="bi bi-cloud-upload me-1"></i> Tải lên
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Hướng dẫn tải lên</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Đặt tiêu đề hấp dẫn và mô tả chi tiết
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Chọn danh mục phù hợp với nội dung video
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Thêm các thẻ liên quan để tăng khả năng tìm kiếm
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Tạo hình thumbnail hấp dẫn để thu hút người xem
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Tuân thủ quy định cộng đồng
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Lợi ích Cloudinary</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-cloud-check-fill text-primary me-2"></i>
+                            Phát video nhanh hơn với CDN toàn cầu
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-speedometer2 text-primary me-2"></i>
+                            Tự động điều chỉnh chất lượng theo thiết bị
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-shield-check text-primary me-2"></i>
+                            Bảo mật và độ tin cậy cao
+                        </li>
+                        <li>
+                            <i class="bi bi-graph-up text-primary me-2"></i>
+                            Phân tích chi tiết về lượt xem video
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Kiểm tra trạng thái kết nối
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connectionStatus');
+
+            if (navigator.onLine) {
+                statusElement.className = 'alert alert-success mb-4';
+                statusElement.innerHTML = '<i class="bi bi-wifi me-2"></i> Đã kết nối internet. Bạn có thể tải lên video.';
+                document.getElementById('uploadButton').disabled = false;
+            } else {
+                statusElement.className = 'alert alert-danger mb-4';
+                statusElement.innerHTML = '<i class="bi bi-wifi-off me-2"></i> Không có kết nối internet. Vui lòng kiểm tra lại kết nối để tải lên video.';
+                document.getElementById('uploadButton').disabled = true;
+            }
+        }
+
+        // Kiểm tra kết nối khi trang tải
+        window.addEventListener('load', updateConnectionStatus);
+
+        // Kiểm tra kết nối khi trạng thái mạng thay đổi
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+
+        // Kiểm tra kết nối định kỳ
+        setInterval(updateConnectionStatus, 10000); // Kiểm tra mỗi 10 giây
+
+        // Hiển thị xem trước thumbnail
+        document.getElementById('ThumbnailFile').addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewContainer = document.createElement('div');
+                    previewContainer.className = 'mt-2';
+                    previewContainer.id = 'thumbnailPreview';
+
+                    const previewImage = document.createElement('img');
+                    previewImage.src = e.target.result;
+                    previewImage.className = 'img-thumbnail';
+                    previewImage.style.maxHeight = '200px';
+
+                    const existingPreview = document.getElementById('thumbnailPreview');
+                    if (existingPreview) {
+                        existingPreview.remove();
+                    }
+
+                    previewContainer.appendChild(previewImage);
+                    document.getElementById('ThumbnailFile').parentNode.appendChild(previewContainer);
+                }
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Hiển thị thông tin video
+        document.getElementById('VideoFile').addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const video = document.createElement('video');
+                video.preload = 'metadata';
+
+                video.onloadedmetadata = function() {
+                    URL.revokeObjectURL(video.src);
+                    const duration = Math.floor(video.duration);
+                    const minutes = Math.floor(duration / 60);
+                    const seconds = duration % 60;
+
+                    const infoContainer = document.createElement('div');
+                    infoContainer.className = 'mt-2';
+                    infoContainer.id = 'videoInfo';
+
+                    infoContainer.innerHTML = `
+                        <p class="mb-0"><strong>Thời lượng:</strong> ${minutes}:${seconds < 10 ? '0' + seconds : seconds}</p>
+                        <p class="mb-0"><strong>Kích thước:</strong> ${(e.target.files[0].size / (1024 * 1024)).toFixed(2)} MB</p>
+                    `;
+
+                    const existingInfo = document.getElementById('videoInfo');
+                    if (existingInfo) {
+                        existingInfo.remove();
+                    }
+
+                    document.getElementById('VideoFile').parentNode.appendChild(infoContainer);
+                }
+
+                video.src = URL.createObjectURL(e.target.files[0]);
+            }
+        });
+
+        // Kiểm tra kích thước file
+        document.getElementById('VideoFile').addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const fileSize = e.target.files[0].size / (1024 * 1024); // Kích thước tính bằng MB
+                if (fileSize > 500) {
+                    alert('Kích thước file vượt quá giới hạn 500MB. Vui lòng chọn file nhỏ hơn.');
+                    this.value = ''; // Xóa file đã chọn
+                }
+            }
+        });
+
+        const uploadForm = document.querySelector('form[asp-action="Upload"]'); // Đảm bảo selector này đúng với form của bạn
+        const uploadButton = document.getElementById('uploadButton'); // Đảm bảo ID này đúng
+
+        if (uploadForm && uploadButton) { // Chỉ chạy nếu tìm thấy form và button
+            // Tạo container cho progress bar và status message (chỉ một lần)
+            const progressBarContainer = document.createElement('div');
+            progressBarContainer.className = 'mt-3 d-none'; // Ẩn ban đầu
+            progressBarContainer.id = 'progressBarContainer';
+            progressBarContainer.innerHTML = `
+                <p class="mb-1" id="progressText">Đang tải lên video...</p>
+                <div class="progress">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                </div>
+            `;
+            uploadForm.parentNode.insertBefore(progressBarContainer, uploadButton.parentNode.nextSibling); // Chèn sau khu vực nút bấm
+
+            const statusMessageContainer = document.createElement('div');
+            statusMessageContainer.id = 'statusMessageContainer';
+            statusMessageContainer.className = 'mt-3';
+            progressBarContainer.parentNode.insertBefore(statusMessageContainer, progressBarContainer.nextSibling); // Chèn sau progress bar
+
+
+            uploadForm.addEventListener('submit', function(e) {
+                e.preventDefault(); // Ngăn form submit theo cách truyền thống
+
+                const videoFile = document.getElementById('VideoFile')?.files[0]; // Thêm ? để tránh lỗi nếu không tìm thấy
+                const thumbnailFile = document.getElementById('ThumbnailFile')?.files[0];
+
+                // Kiểm tra file và kết nối (có thể thêm validation khác ở đây)
+                if (!videoFile) {
+                    alert('Vui lòng chọn file video để tải lên.');
+                    return;
+                }
+                 // Kiểm tra lại kích thước lần nữa trước khi gửi
+                 if (videoFile.size / (1024*1024) > maxSizeVideoMB) {
+                     alert(`Kích thước file video vượt quá giới hạn ${maxSizeVideoMB}MB.`);
+                     return;
+                 }
+                 if (thumbnailFile && (thumbnailFile.size / (1024*1024) > maxSizeThumbnailMB)) {
+                     alert(`Kích thước file thumbnail vượt quá giới hạn ${maxSizeThumbnailMB}MB.`);
+                     return;
+                 }
+
+                if (!navigator.onLine) {
+                    alert('Không có kết nối internet. Vui lòng kiểm tra lại.');
+                    return;
+                }
+
+                // --- Chuẩn bị cho AJAX ---
+                const formData = new FormData(uploadForm); // Lấy tất cả dữ liệu form
+                const xhr = new XMLHttpRequest();
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+
+                 // --- Lấy AntiForgery Token (QUAN TRỌNG nếu Action có [ValidateAntiForgeryToken]) ---
+                 // Đảm bảo input này tồn tại trong form (thường được tạo bởi @Html.AntiForgeryToken())
+                 const antiforgeryTokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                 const antiforgeryToken = antiforgeryTokenInput ? antiforgeryTokenInput.value : null;
+
+
+                // --- Cập nhật UI: Bắt đầu Upload ---
+                uploadButton.disabled = true;
+                uploadButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Đang tải lên...';
+                progressBarContainer.classList.remove('d-none'); // Hiện progress bar
+                if (progressBar && progressText) { // Kiểm tra element tồn tại
+                    progressBar.style.width = '0%';
+                    progressBar.setAttribute('aria-valuenow', '0');
+                    progressBar.textContent = '0%';
+                    progressText.textContent = 'Đang tải lên video...';
+                }
+                statusMessageContainer.innerHTML = ''; // Xóa thông báo cũ
+
+                // --- Theo dõi tiến trình Upload ---
+                xhr.upload.addEventListener('progress', function(event) {
+                     if (event.lengthComputable && progressBar && progressText) { // Kiểm tra element tồn tại
+                        const percentComplete = Math.round((event.loaded / event.total) * 100);
+                        progressBar.style.width = percentComplete + '%';
+                        progressBar.setAttribute('aria-valuenow', percentComplete);
+                        progressBar.textContent = percentComplete + '%';
+                         if (percentComplete === 100) {
+                            progressText.textContent = 'Đang xử lý video...'; // Khi upload xong, chờ server xử lý
+                            progressBar.classList.add('progress-bar-striped', 'progress-bar-animated');
+                        } else {
+                            progressText.textContent = 'Đang tải lên video...';
+                             progressBar.classList.remove('progress-bar-striped', 'progress-bar-animated'); // Nên bỏ animation khi đang upload thực tế
+                        }
+                    }
+                });
+
+                // --- Xử lý khi Upload hoàn tất (thành công hoặc lỗi server) ---
+                xhr.onload = function() {
+                    uploadButton.disabled = false; // Kích hoạt lại nút
+                    uploadButton.innerHTML = '<i class="bi bi-cloud-upload me-1"></i> Tải lên';
+                    progressBarContainer.classList.add('d-none'); // Ẩn progress bar
+
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        // Thành công (HTTP status 2xx)
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                             // Hiển thị thông báo thành công
+                            statusMessageContainer.innerHTML = `
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-check-circle-fill me-2"></i>
+                                    ${response.message || 'Video đã được tải lên thành công!'}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            `;
+                            uploadForm.reset(); // Xóa các trường trong form
+                            // Xóa preview ảnh và video info
+                             document.getElementById('thumbnailPreview')?.remove();
+                             document.getElementById('videoInfo')?.remove();
+                        } catch (e) {
+                            statusMessageContainer.innerHTML = `
+                                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    Phản hồi không hợp lệ từ máy chủ.
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        // Lỗi từ Server (HTTP status không phải 2xx)
+                        let errorMessage = `Lỗi ${xhr.status}: ${xhr.statusText || 'Unknown server error'}`;
+                        let detailedErrors = '';
+                        try {
+                             const errorResponse = JSON.parse(xhr.responseText);
+                             if (errorResponse && typeof errorResponse === 'object') {
+                                 if (errorResponse.message) {
+                                     errorMessage = errorResponse.message;
+                                 } else if (errorResponse.errors) { // Lỗi từ ModelState
+                                     detailedErrors = "<ul class='mb-0'>";
+                                     for (const key in errorResponse.errors) {
+                                         if (errorResponse.errors.hasOwnProperty(key)) {
+                                             errorResponse.errors[key].forEach(err => {
+                                                 detailedErrors += `<li>${err}</li>`;
+                                             });
+                                         }
+                                     }
+                                     detailedErrors += "</ul>";
+                                      errorMessage = "Dữ liệu nhập không hợp lệ:"; // Thay thông báo chung
+                                 } else {
+                                     errorMessage = `Lỗi không xác định từ máy chủ: ${JSON.stringify(errorResponse)}`;
+                                 }
+                             }
+                        } catch (e) { /* Không parse được JSON, giữ lỗi mặc định */ }
+
+                        statusMessageContainer.innerHTML = `
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <strong>Tải lên thất bại!</strong> ${errorMessage} ${detailedErrors}
+                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        `;
+                    }
+                };
+
+                // --- Xử lý lỗi mạng (Network Error) ---
+                xhr.onerror = function() {
+                    uploadButton.disabled = false;
+                    uploadButton.innerHTML = '<i class="bi bi-cloud-upload me-1"></i> Tải lên';
+                    progressBarContainer.classList.add('d-none');
+                    statusMessageContainer.innerHTML = `
+                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                             <i class="bi bi-wifi-off me-2"></i> Lỗi mạng hoặc không thể kết nối đến máy chủ. Vui lòng thử lại.
+                              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                         </div>
+                     `;
+                };
+
+                // --- Gửi Request ---
+                xhr.open(uploadForm.method, uploadForm.action, true);
+
+                 // --- Gửi AntiForgery Token (QUAN TRỌNG nếu Action có [ValidateAntiForgeryToken]) ---
+                 if (antiforgeryToken) {
+                     xhr.setRequestHeader("RequestVerificationToken", antiforgeryToken);
+                 } else {
+                     console.warn("Anti-forgery token not found. Ensure it's rendered in the form if required by the server.");
+                     // Có thể bạn muốn hiển thị lỗi cho người dùng hoặc dừng upload ở đây nếu token là bắt buộc
+                     // alert('Lỗi bảo mật: Không tìm thấy token xác thực.');
+                     // uploadButton.disabled = false; // Bật lại nút
+                     // uploadButton.innerHTML = '<i class="bi bi-cloud-upload me-1"></i> Tải lên';
+                     // return;
+                 }
+
+                // Gửi FormData
+                xhr.send(formData);
+            });
+        } else {
+            console.error("Upload form or upload button not found. AJAX upload script will not run.");
+        }
+
+    </script>
+}

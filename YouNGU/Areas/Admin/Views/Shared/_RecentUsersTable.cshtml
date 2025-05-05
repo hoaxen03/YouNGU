@@ -1,0 +1,117 @@
+﻿@* Kế thừa danh sách người dùng từ Model chính *@
+@model List<YouNGU.Areas.Admin.Models.RecentUserViewModel>
+@inject Microsoft.AspNetCore.Mvc.IUrlHelper Url
+
+@{
+    // Hàm trợ giúp định dạng ngày tháng
+    string FormatDate(DateTime date)
+    {
+        return date.ToString("dd/MM/yyyy");
+    }
+
+    // Hàm trợ giúp lấy CSS class cho role badge
+    string GetRoleBadgeClass(string role)
+    {
+        return role.ToLower() switch
+        {
+            "admin" => "bg-red-100 text-red-800",
+            "người sáng tạo" => "bg-purple-100 text-purple-800", // Creator
+            "người dùng" => "bg-blue-100 text-blue-800", // User
+            _ => "bg-gray-100 text-gray-800",
+        };
+    }
+
+    // Hàm trợ giúp lấy CSS class cho status badge
+    string GetUserStatusBadgeClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "hoạt động" => "bg-green-100 text-green-800",
+            "bị khóa" => "bg-yellow-100 text-yellow-800",
+            _ => "bg-gray-100 text-gray-800",
+        };
+    }
+}
+
+<div class="overflow-x-auto">
+    <table class="w-full">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Người dùng
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ngày đăng ký
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Vai trò
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Trạng thái
+                </th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Thao tác
+                </th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var user in Model)
+                {
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <img src="@(Url.Content(user.AvatarUrl ?? "~/images/placeholder-avatar.png"))"
+                                     alt="User avatar"
+                                     class="w-10 h-10 rounded-full mr-3 flex-shrink-0"
+                                     onerror="this.onerror=null; this.src='@Url.Content("~/images/placeholder-avatar.png")';" />
+                                <span class="font-medium text-sm">@user.UserName</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">@user.Email</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">@FormatDate(user.RegisteredAt)</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full @GetRoleBadgeClass(user.Role)">
+                                @user.Role
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full @GetUserStatusBadgeClass(user.Status)">
+                                @user.Status
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            @* Dropdown Menu *@
+                            <div class="relative inline-block text-left dropdown">
+                                <button type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-2 py-1 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                                <div class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden dropdown-menu z-10" role="menu" aria-orientation="vertical" aria-labelledby="menu-button">
+                                    <div class="py-1" role="none">
+                                        <a asp-area="Admin" asp-controller="Users" asp-action="Edit" asp-route-id="@user.Id" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">
+                                            <i class="fa-solid fa-user-pen mr-2"></i>Chỉnh sửa
+                                        </a>
+                                        @* Nút xóa thường cần xác nhận JS *@
+                                        <button type="button" data-id="@user.Id" class="text-red-600 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 delete-user-btn" role="menuitem">
+                                            <i class="fa-solid fa-user-slash mr-2"></i>Xóa
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">Không có người dùng nào gần đây.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,216 @@
+﻿@* Kế thừa model IEnumerable<YouNGU.Models.Entities.Video> *@
+@model IEnumerable<YouNGU.Models.Entities.Video>
+@* Inject dịch vụ IHttpContextAccessor để có thể truy cập User trong view (nếu cần) *@
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    // Đặt tiêu đề cho trang
+    ViewData["Title"] = "Kết quả tìm kiếm";
+
+    // Hàm trợ giúp để tính toán thời gian tương đối
+    string GetTimeAgo(DateTime createdAt)
+    {
+        var timeSpan = DateTime.UtcNow - createdAt;
+
+        if (timeSpan.TotalDays < 1)
+        {
+            if (timeSpan.TotalHours < 1)
+            {
+                if (timeSpan.TotalMinutes < 1)
+                {
+                    return "vài giây trước";
+                }
+                return $"{(int)timeSpan.TotalMinutes} phút trước";
+            }
+            return $"{(int)timeSpan.TotalHours} giờ trước";
+        }
+        if (timeSpan.TotalDays < 30)
+        {
+            return $"{(int)timeSpan.TotalDays} ngày trước";
+        }
+        if (timeSpan.TotalDays < 365)
+        {
+            return $"{(int)(timeSpan.TotalDays / 30)} tháng trước";
+        }
+        return $"{(int)(timeSpan.TotalDays / 365)} năm trước";
+    }
+
+    // Hàm trợ giúp định dạng lượt xem
+    string FormatViewCount(int viewCount)
+    {
+        if (viewCount >= 1000000)
+            return (viewCount / 1000000.0).ToString("0.#") + " Tr lượt xem";
+        if (viewCount >= 1000)
+            return (viewCount / 1000.0).ToString("0.#") + " N lượt xem";
+        return viewCount.ToString() + " lượt xem";
+    }
+}
+
+<style>
+    /* CSS để tạo kiểu cho các thẻ video */
+    .video-results-container {
+        display: grid; /* Sử dụng grid layout */
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Tạo các cột tự động điều chỉnh kích thước */
+        gap: 20px; /* Khoảng cách giữa các thẻ */
+        padding: 20px 0; /* Đệm trên và dưới */
+    }
+
+    .video-card {
+        border: 1px solid #ddd; /* Viền thẻ */
+        border-radius: 8px; /* Bo góc thẻ */
+        overflow: hidden; /* Ẩn phần vượt quá thẻ */
+        background-color: #fff; /* Nền trắng */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Đổ bóng nhẹ */
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Hiệu ứng khi di chuột */
+        text-decoration: none; /* Bỏ gạch chân của link */
+        color: inherit; /* Kế thừa màu chữ */
+        display: flex; /* Sử dụng flexbox cho nội dung bên trong */
+        flex-direction: column; /* Sắp xếp nội dung theo chiều dọc */
+    }
+
+        .video-card:hover {
+            transform: translateY(-5px); /* Nâng thẻ lên khi di chuột */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); /* Tăng bóng đổ khi di chuột */
+        }
+
+    .video-thumbnail img {
+        width: 100%; /* Chiều rộng ảnh 100% */
+        height: 150px; /* Chiều cao cố định cho ảnh (có thể điều chỉnh) */
+        object-fit: cover; /* Cắt ảnh để vừa khung */
+        display: block; /* Hiển thị dạng block */
+        background-color: #eee; /* Màu nền tạm thời cho ảnh */
+    }
+
+    .video-info {
+        padding: 12px 15px; /* Điều chỉnh đệm */
+        flex-grow: 1; /* Cho phép phần này co giãn */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .video-title {
+        font-weight: 600; /* Đậm hơn một chút */
+        margin: 0 0 5px 0; /* Khoảng cách dưới */
+        font-size: 1rem; /* Kích thước chữ tiêu đề (điều chỉnh nếu cần) */
+        line-height: 1.4; /* Chiều cao dòng */
+        /* Giới hạn số dòng và thêm dấu ... */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-height: 2.8em; /* Chiều cao tối thiểu cho 2 dòng */
+        color: #0f0f0f; /* Màu tiêu đề tối hơn */
+    }
+
+    /* CSS cho tên kênh */
+    .video-channel-name {
+        font-size: 0.85rem; /* Kích thước chữ nhỏ hơn */
+        color: #606060; /* Màu chữ xám */
+        margin-bottom: 3px; /* Khoảng cách dưới */
+        text-decoration: none; /* Bỏ gạch chân mặc định */
+        display: block; /* Để chiếm hết chiều rộng */
+        white-space: nowrap; /* Không xuống dòng */
+        overflow: hidden; /* Ẩn phần dư thừa */
+        text-overflow: ellipsis; /* Thêm dấu ... */
+    }
+
+        .video-channel-name:hover {
+            color: #030303; /* Đổi màu khi di chuột */
+        }
+
+    /* CSS cho lượt xem và ngày đăng */
+    .video-metadata {
+        font-size: 0.85rem; /* Kích thước chữ nhỏ hơn */
+        color: #606060; /* Màu chữ xám */
+        margin-bottom: 0; /* Bỏ khoảng cách dưới */
+    }
+
+
+    .no-results {
+        text-align: center; /* Căn giữa */
+        padding: 40px 20px; /* Đệm */
+        color: #666; /* Màu chữ xám */
+        font-size: 1.2em; /* Kích thước chữ */
+    }
+
+    h1 {
+        margin-bottom: 20px; /* Thêm khoảng cách dưới tiêu đề H1 */
+        font-size: 1.8em; /* Tăng kích thước tiêu đề chính */
+    }
+</style>
+
+<h1>@ViewData["Title"]</h1>
+
+@if (Model != null && Model.Any())
+{
+    <div class="video-results-container">
+        @foreach (var video in Model)
+        {
+            @* Bọc toàn bộ thẻ bằng link đến trang xem video *@
+            <a asp-controller="Video" asp-action="Watch" asp-route-id="@video.Id" class="video-card">
+                <div class="video-thumbnail">
+                    @{
+                        string imageUrl = $"https://placehold.co/300x150/eee/aaa?text=Video"; // Placeholder mặc định
+                        if (!string.IsNullOrEmpty(video.ThumbnailUrl))
+                        {
+                            imageUrl = video.ThumbnailUrl; // Ưu tiên Cloudinary
+                        }
+                        else if (!string.IsNullOrEmpty(video.ThumbnailPath))
+                        {
+                            // Chú ý: Cần đảm bảo đường dẫn này đúng với cấu trúc thư mục của bạn
+                            // Url.Content cần được sử dụng đúng cách trong ngữ cảnh Razor Pages/MVC
+                            // Nếu đây là API hoặc ngữ cảnh khác, bạn cần tạo URL tuyệt đối.
+                            // Ví dụ đơn giản hóa, có thể cần điều chỉnh:
+                            try
+                            {
+                                imageUrl = Url.Content($"~/uploads/thumbnails/{video.ThumbnailPath}");
+                            }
+                            catch
+                            {
+                                // Xử lý nếu Url.Content không khả dụng hoặc lỗi
+                                imageUrl = $"/uploads/thumbnails/{video.ThumbnailPath}"; // Thử đường dẫn tương đối gốc
+                            }
+                        }
+                        // Bạn có thể thêm ảnh placeholder mặc định của riêng bạn ở đây nếu muốn
+                        // else { imageUrl = Url.Content("~/images/default-thumbnail.jpg"); }
+                    }
+                    <img src="@imageUrl"
+                         alt="Ảnh đại diện cho @video.Title"
+                         onerror="this.onerror=null; this.src='https://placehold.co/300x150/eee/aaa?text=Lỗi+ảnh';">
+                </div>
+                <div class="video-info">
+                    @* Tiêu đề video (không cần thẻ <a> bên trong nữa vì cả card đã là link) *@
+                    <h3 class="video-title">@video.Title</h3>
+
+                    @*
+                        Tên kênh (Link đến trang kênh)
+                        Kiểm tra xem video.User có null không trước khi truy cập UserName và Id
+                    *@
+                    @if (video.User != null)
+                    {
+                        <a asp-controller="Channel" asp-action="Index" asp-route-id="@video.UserId" class="video-channel-name" onclick="event.stopPropagation();">
+                            @video.User.UserName
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="video-channel-name">Kênh không xác định</span>
+                    }
+
+                    @* Lượt xem và Ngày đăng *@
+                    <p class="video-metadata">
+                        @FormatViewCount(video.ViewCount) • @GetTimeAgo(video.CreatedAt)
+                    </p>
+                </div>
+            </a>
+        }
+    </div>
+}
+else
+{
+    <div class="no-results">
+        <p>Không tìm thấy video nào phù hợp với tìm kiếm của bạn.</p>
+    </div>
+}

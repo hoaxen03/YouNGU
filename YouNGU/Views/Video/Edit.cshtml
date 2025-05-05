@@ -1,0 +1,254 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model YouNGU.Models.ViewModels.EditVideoViewModel
+@{
+    ViewData["Title"] = "Chỉnh sửa video";
+}
+
+<div class="container">
+    <h1 class="mb-4">Chỉnh sửa video</h1>
+
+    <!-- Hiển thị thông báo lỗi từ TempData nếu có -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger mb-4">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Hiển thị thông báo thành công từ TempData nếu có -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success mb-4">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Edit" method="post" enctype="multipart/form-data" id="editForm">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="CloudinaryPublicId" />
+                        <input type="hidden" asp-for="CurrentVideoUrl" />
+                        <input type="hidden" asp-for="CurrentThumbnailUrl" />
+                        <input type="hidden" asp-for="Duration" />
+                        <input type="hidden" asp-for="CreatedAt" />
+                        <input type="hidden" asp-for="ViewCount" />
+                        <input type="hidden" asp-for="LikeCount" />
+                        <input type="hidden" asp-for="CommentCount" />
+
+                        <div asp-validation-summary="All" class="text-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">Tiêu đề</label>
+                            <input asp-for="Title" class="form-control" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Mô tả</label>
+                            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CategoryId" class="form-label">Danh mục</label>
+                            <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select"></select>
+                            <span asp-validation-for="CategoryId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Tags" class="form-label">Thẻ (phân cách bằng dấu phẩy)</label>
+                            <input asp-for="Tags" class="form-control" />
+                            <span asp-validation-for="Tags" class="text-danger"></span>
+                        </div>
+
+                        <!-- Hiển thị video hiện tại -->
+                        <div class="mb-3">
+                            <label class="form-label">Video hiện tại</label>
+                            <div class="ratio ratio-16x9">
+                                <video controls>
+                                    <source src="@Model.CurrentVideoUrl" type="video/mp4">
+                                    Trình duyệt của bạn không hỗ trợ thẻ video.
+                                </video>
+                            </div>
+                        </div>
+
+                        <!-- Hiển thị thumbnail hiện tại và tùy chọn tải lên thumbnail mới -->
+                        <div class="mb-3">
+                            <label class="form-label">Thumbnail hiện tại</label>
+                            <div class="mb-2">
+                                <img src="@Model.CurrentThumbnailUrl" alt="Thumbnail" class="img-thumbnail" style="max-height: 200px;" />
+                            </div>
+                            <label asp-for="ThumbnailFile" class="form-label">Tải lên thumbnail mới (tùy chọn)</label>
+                            <input asp-for="ThumbnailFile" type="file" class="form-control" accept="image/*" />
+                            <span asp-validation-for="ThumbnailFile" class="text-danger"></span>
+                            <small class="form-text text-muted">Định dạng hỗ trợ: JPG, PNG. Kích thước tối đa: 2MB.</small>
+                        </div>
+
+                        <!-- Tùy chọn Cloudinary -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">Tùy chọn Cloudinary</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label asp-for="VideoQuality" class="form-label">Chất lượng video</label>
+                                    <select asp-for="VideoQuality" class="form-select">
+                                        <option value="auto">Tự động</option>
+                                        <option value="low">Thấp (360p)</option>
+                                        <option value="medium">Trung bình (720p)</option>
+                                        <option value="high">Cao (1080p)</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="VideoFormat" class="form-label">Định dạng video</label>
+                                    <select asp-for="VideoFormat" class="form-select">
+                                        <option value="auto">Tự động</option>
+                                        <option value="mp4">MP4</option>
+                                        <option value="webm">WebM</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="IsPublic" class="form-check-input" />
+                                <label asp-for="IsPublic" class="form-check-label">Công khai</label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <a asp-controller="Video" asp-action="Watch" asp-route-id="@Model.Id" class="btn btn-secondary me-2">Hủy</a>
+                            <button type="submit" class="btn btn-primary" id="updateButton">
+                                <i class="bi bi-save me-1"></i> Lưu thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Thông tin video</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>ID:</span>
+                            <span class="badge bg-primary rounded-pill">@Model.Id</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Ngày tạo:</span>
+                            <span>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Thời lượng:</span>
+                            <span>@TimeSpan.FromSeconds(Model.Duration).ToString(@"mm\:ss")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Lượt xem:</span>
+                            <span class="badge bg-info rounded-pill">@Model.ViewCount</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Lượt thích:</span>
+                            <span class="badge bg-success rounded-pill">@Model.LikeCount</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Bình luận:</span>
+                            <span class="badge bg-secondary rounded-pill">@Model.CommentCount</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Hướng dẫn chỉnh sửa</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Đặt tiêu đề hấp dẫn và mô tả chi tiết
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Chọn danh mục phù hợp với nội dung video
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Thêm các thẻ liên quan để tăng khả năng tìm kiếm
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Tạo hình thumbnail hấp dẫn để thu hút người xem
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Tuân thủ quy định cộng đồng
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Hiển thị xem trước thumbnail mới
+        document.getElementById('ThumbnailFile').addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewContainer = document.createElement('div');
+                    previewContainer.className = 'mt-2';
+                    previewContainer.id = 'thumbnailPreview';
+
+                    const previewImage = document.createElement('img');
+                    previewImage.src = e.target.result;
+                    previewImage.className = 'img-thumbnail';
+                    previewImage.style.maxHeight = '200px';
+
+                    const existingPreview = document.getElementById('thumbnailPreview');
+                    if (existingPreview) {
+                        existingPreview.remove();
+                    }
+
+                    previewContainer.appendChild(previewImage);
+                    document.getElementById('ThumbnailFile').parentNode.appendChild(previewContainer);
+                }
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Kiểm tra kích thước file
+        document.getElementById('ThumbnailFile').addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const fileSize = e.target.files[0].size / (1024 * 1024); // Kích thước tính bằng MB
+                if (fileSize > 2) {
+                    alert('Kích thước file vượt quá giới hạn 2MB. Vui lòng chọn file nhỏ hơn.');
+                    this.value = ''; // Xóa file đã chọn
+                }
+            }
+        });
+
+        // Xử lý form submit
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            // Hiển thị thông báo đang cập nhật
+            const submitBtn = document.getElementById('updateButton');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Đang cập nhật...';
+
+            // Cho phép form submit
+            return true;
+        });
+    </script>
+}
