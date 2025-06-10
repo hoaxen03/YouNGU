@@ -2,34 +2,43 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using YouNGU.Areas.Admin.Models;
+using YouNGU.Data.Repositories;
 using YouNGU.Models.Entities;
 
 namespace YouNGU.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Authorize(Roles = "Admin")]
+    [Route("Admin/[controller]")]
     public class UserManagementController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IUserRepository _userRepository;
 
         public UserManagementController(
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager,
+            IUserRepository userRepository)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _userRepository = userRepository;
         }
-
+        [HttpGet]
+        [Route("")]
+        [Route("Index")]
         public async Task<IActionResult> Index()
         {
-            var users = _userManager.Users;
+            var users = await _userRepository.GetAllAsync();
+            ViewData["UserManager"] = _userManager;
             return View(users);
         }
-
+        [HttpGet]
+        [Route("Edit/{id}")]
         public async Task<IActionResult> Edit(string id)
         {
-            var user = await _userManager.FindByIdAsync(id);
+            var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
             {
                 return NotFound();
@@ -52,6 +61,8 @@ namespace YouNGU.Areas.Admin.Controllers
         }
 
         [HttpPost]
+        [Route("Edit/{id}")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditUserViewModel model, string[] selectedRoles)
         {
             if (!ModelState.IsValid)
@@ -60,7 +71,7 @@ namespace YouNGU.Areas.Admin.Controllers
                 return View(model);
             }
 
-            var user = await _userManager.FindByIdAsync(model.Id);
+            var user = await _userRepository.GetByIdAsync(model.Id);
             if (user == null)
             {
                 return NotFound();
@@ -70,23 +81,14 @@ namespace YouNGU.Areas.Admin.Controllers
             user.Email = model.Email;
             user.FullName = model.FullName;
 
-            var result = await _userManager.UpdateAsync(user);
-            if (!result.Succeeded)
-            {
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError("", error.Description);
-                }
-                model.AllRoles = _roleManager.Roles;
-                return View(model);
-            }
+            await _userRepository.UpdateAsync(user);
 
             // Cập nhật vai trò
             var userRoles = await _userManager.GetRolesAsync(user);
             selectedRoles = selectedRoles ?? new string[] { };
 
             // Xóa vai trò hiện tại
-            result = await _userManager.RemoveFromRolesAsync(user, userRoles);
+            var result = await _userManager.RemoveFromRolesAsync(user, userRoles);
             if (!result.Succeeded)
             {
                 ModelState.AddModelError("", "Không thể xóa vai trò hiện tại");
@@ -107,9 +109,11 @@ namespace YouNGU.Areas.Admin.Controllers
         }
 
         [HttpPost]
+        [Route("Delete/{id}")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string id)
         {
-            var user = await _userManager.FindByIdAsync(id);
+            var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
             {
                 return NotFound();

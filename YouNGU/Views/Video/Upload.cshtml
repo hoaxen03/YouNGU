@@ -61,7 +61,7 @@
                             <label asp-for="VideoFile" class="form-label">File video</label>
                             <input asp-for="VideoFile" type="file" class="form-control" accept="video/*" />
                             <span asp-validation-for="VideoFile" class="text-danger"></span>
-                            <small class="form-text text-muted">Định dạng hỗ trợ: MP4, WebM, Ogg. Kích thước tối đa: 500MB.</small>
+                            <small class="form-text text-muted">Định dạng hỗ trợ: MP4, WebM, Ogg. Kích thước tối đa: 100MB.</small>
                         </div>
 
                         <div class="mb-3">
@@ -69,33 +69,6 @@
                             <input asp-for="ThumbnailFile" type="file" class="form-control" accept="image/*" />
                             <span asp-validation-for="ThumbnailFile" class="text-danger"></span>
                             <small class="form-text text-muted">Định dạng hỗ trợ: JPG, PNG. Kích thước tối đa: 2MB.</small>
-                        </div>
-
-                        <!-- Tùy chọn Cloudinary -->
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h5 class="mb-0">Tùy chọn Cloudinary</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label asp-for="VideoQuality" class="form-label">Chất lượng video</label>
-                                    <select asp-for="VideoQuality" class="form-select">
-                                        <option value="auto">Tự động</option>
-                                        <option value="low">Thấp (360p)</option>
-                                        <option value="medium">Trung bình (720p)</option>
-                                        <option value="high">Cao (1080p)</option>
-                                    </select>
-                                </div>
-                        
-                                <div class="mb-3">
-                                    <label asp-for="VideoFormat" class="form-label">Định dạng video</label>
-                                    <select asp-for="VideoFormat" class="form-select">
-                                        <option value="auto">Tự động</option>
-                                        <option value="mp4">MP4</option>
-                                        <option value="webm">WebM</option>
-                                    </select>
-                                </div>
-                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -179,6 +152,8 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        const maxSizeVideoMB = 500;
+        const maxSizeThumbnailMB = 2;
         // Kiểm tra trạng thái kết nối
         function updateConnectionStatus() {
             const statusElement = document.getElementById('connectionStatus');
@@ -267,14 +242,14 @@
         document.getElementById('VideoFile').addEventListener('change', function(e) {
             if (e.target.files && e.target.files[0]) {
                 const fileSize = e.target.files[0].size / (1024 * 1024); // Kích thước tính bằng MB
-                if (fileSize > 500) {
-                    alert('Kích thước file vượt quá giới hạn 500MB. Vui lòng chọn file nhỏ hơn.');
+                if (fileSize > 100) {
+                    alert('Kích thước file vượt quá giới hạn 100MB. Vui lòng chọn file nhỏ hơn.');
                     this.value = ''; // Xóa file đã chọn
                 }
             }
         });
 
-        const uploadForm = document.querySelector('form[asp-action="Upload"]'); // Đảm bảo selector này đúng với form của bạn
+        const uploadForm = document.querySelector('form[action*="Upload"]');
         const uploadButton = document.getElementById('uploadButton'); // Đảm bảo ID này đúng
 
         if (uploadForm && uploadButton) { // Chỉ chạy nếu tìm thấy form và button
@@ -288,12 +263,12 @@
                     <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
                 </div>
             `;
-            uploadForm.parentNode.insertBefore(progressBarContainer, uploadButton.parentNode.nextSibling); // Chèn sau khu vực nút bấm
+                uploadButton.parentNode.insertBefore(progressBarContainer, uploadButton);
 
             const statusMessageContainer = document.createElement('div');
             statusMessageContainer.id = 'statusMessageContainer';
             statusMessageContainer.className = 'mt-3';
-            progressBarContainer.parentNode.insertBefore(statusMessageContainer, progressBarContainer.nextSibling); // Chèn sau progress bar
+                progressBarContainer.parentNode.appendChild(statusMessageContainer);
 
 
             uploadForm.addEventListener('submit', function(e) {
@@ -451,11 +426,7 @@
                      xhr.setRequestHeader("RequestVerificationToken", antiforgeryToken);
                  } else {
                      console.warn("Anti-forgery token not found. Ensure it's rendered in the form if required by the server.");
-                     // Có thể bạn muốn hiển thị lỗi cho người dùng hoặc dừng upload ở đây nếu token là bắt buộc
-                     // alert('Lỗi bảo mật: Không tìm thấy token xác thực.');
-                     // uploadButton.disabled = false; // Bật lại nút
-                     // uploadButton.innerHTML = '<i class="bi bi-cloud-upload me-1"></i> Tải lên';
-                     // return;
+
                  }
 
                 // Gửi FormData

@@ -45,7 +45,6 @@
             display: block; /* Hoặc flex để căn giữa nếu cần */
             width: 100%;
             height: auto; /* Cho phép chiều cao tự điều chỉnh */
-            max-height: 85vh; /* Giới hạn chiều cao tối đa, ví dụ 85% viewport height */
             aspect-ratio: var(--video-aspect-ratio, 16 / 9); /* Tỷ lệ mặc định, sẽ ghi đè bằng JS */
             margin: auto; /* Căn giữa nếu video không chiếm hết chiều rộng */
         }
@@ -218,6 +217,33 @@
             color: #606060;
             line-height: 1.2;
         }
+        /* Hỗ trợ video lấp đầy khi fullscreen */
+        .video-player:fullscreen,
+        .video-player:-webkit-full-screen,
+        .video-player:-moz-full-screen,
+        .video-player:-ms-fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            aspect-ratio: unset !important;
+            border-radius: 0 !important;
+            background: #000 !important;
+        }
+
+        .cld-video-player:fullscreen,
+        .cld-video-player:-webkit-full-screen,
+        .cld-video-player:-moz-full-screen,
+        .cld-video-player:-ms-fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            aspect-ratio: unset !important;
+            border-radius: 0 !important;
+            background: #000 !important;
+        }
+
     </style>
 }
 
@@ -419,6 +445,8 @@
 
 @section Scripts {
     <script>
+            const defaultAvatar = '@(defaultAvatar.Replace("'", "\\'"))';
+
         // === Lấy AntiForgeryToken bằng JavaScript ===
         const antiForgeryTokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
         const antiForgeryToken = antiForgeryTokenInput ? antiForgeryTokenInput.value : null;
@@ -507,7 +535,11 @@
                      transformation: { }, // Bỏ streaming_profile nếu upload ko dùng profile cụ thể
                      colors: { accent: '#cc0000', base: '#000000' },
                      fontFace: 'Roboto, Arial, sans-serif',
-                     plugins: {}
+                     plugins: {
+                     //           qualitySelector: {
+                     //               default: 'auto'
+                     //           }
+                     }
                  });
 
                  var viewCountIncremented = false;

@@ -1,0 +1,193 @@
+﻿@using YouNGU.Models.Entities
+@model YouNGU.Areas.Admin.Models.EditUserViewModel
+@{
+    ViewData["Title"] = "Chỉnh sửa người dùng";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Chỉnh sửa người dùng</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/Admin/Dashboard">Bảng điều khiển</a></li>
+        <li class="breadcrumb-item"><a href="/Admin/UserManagement">Quản lý người dùng</a></li>
+        <li class="breadcrumb-item active">Chỉnh sửa người dùng</li>
+    </ol>
+
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-user-edit me-1"></i>
+                    Thông tin người dùng
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="UserName" class="form-label">Tên người dùng</label>
+                            <input asp-for="UserName" class="form-control" />
+                            <span asp-validation-for="UserName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="FullName" class="form-label">Họ tên</label>
+                            <input asp-for="FullName" class="form-control" />
+                            <span asp-validation-for="FullName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Vai trò người dùng</label>
+                            <div class="card">
+                                <div class="card-body">
+                                    @foreach (var role in Model.AllRoles)
+                                    {
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input"
+                                                   type="checkbox"
+                                                   name="selectedRoles"
+                                                   value="@role.Name"
+                                                   id="role_@role.Id"
+                                            @(Model.UserRoles.Contains(role.Name) ? "checked" : "") />
+                                            <label class="form-check-label" for="role_@role.Id">
+                                                @role.Name
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+                            <div>
+                                <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                    <i class="fas fa-trash me-1"></i> Xóa
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i> Lưu thay đổi
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Thông tin người dùng
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar-placeholder bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 100px; height: 100px; font-size: 2.5rem;">
+                            @if (!string.IsNullOrEmpty(Model.FullName))
+                            {
+                                @Model.FullName.Substring(0, 1)
+                            }
+                            else if (!string.IsNullOrEmpty(Model.UserName))
+                            {
+                                @Model.UserName.Substring(0, 1)
+                            }
+                            else
+                            {
+                                <i class="fas fa-user"></i>
+                            }
+                        </div>
+                        <h5 class="mt-3">@Model.FullName</h5>
+                        <p class="text-muted">@Model.UserName</p>
+                    </div>
+
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>ID người dùng</span>
+                            <span class="badge bg-primary rounded-pill">@Model.Id</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Email</span>
+                            <span>@Model.Email</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Vai trò</span>
+                            <div>
+                                @foreach (var role in Model.UserRoles)
+                                {
+                                    <span class="badge bg-primary me-1">@role</span>
+                                }
+                                @if (!Model.UserRoles.Any())
+                                {
+                                    <span class="text-muted">Không có vai trò</span>
+                                }
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Tùy chọn bảo mật
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="fas fa-key me-1"></i> Đặt lại mật khẩu
+                        </a>
+                        <a href="#" class="btn btn-outline-warning">
+                            <i class="fas fa-lock me-1"></i> Khóa tài khoản
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa người dùng "<strong>@Model.UserName</strong>"?</p>
+                <p class="text-danger">Hành động này không thể hoàn tác. Tất cả nội dung do người dùng này tạo ra sẽ vẫn còn nhưng sẽ bị mồ côi.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Form validation
+            $('form').on('submit', function() {
+                // Kiểm tra xem có ít nhất một vai trò được chọn không
+                if ($('input[name="selectedRoles"]:checked').length === 0) {
+                    alert('Vui lòng chọn ít nhất một vai trò cho người dùng.');
+                    return false;
+                }
+                return true;
+            });
+        });
+    </script>
+}

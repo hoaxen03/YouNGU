@@ -7,13 +7,16 @@ namespace YouNGU.Services
     {
         private readonly IVideoRepository _videoRepository;
         private readonly CloudinaryService _cloudinaryService;
+        private readonly INotificationService _notificationService;
 
         public VideoService(
             IVideoRepository videoRepository,
-            CloudinaryService cloudinaryService)
+            CloudinaryService cloudinaryService,
+            INotificationService notificationService)
         {
             _videoRepository = videoRepository;
             _cloudinaryService = cloudinaryService;
+            _notificationService = notificationService;
         }
 
         public async Task<int> UploadVideoAsync(string title, string description, int categoryId, string userId, IFormFile videoFile, IFormFile thumbnailFile, bool isPublic)
@@ -40,8 +43,6 @@ namespace YouNGU.Services
             // Quyết định StreamingProfile tự động
             string streamingProfile = videoExtension == ".mp4" ? "hls" : "dash";
 
-            // Tạo watermark text từ tên người dùng
-            string watermarkText = "YouNGU";
 
             // Tải video lên Cloudinary 
             var videoUploadResult = await _cloudinaryService.UploadVideoAsync(videoFile, streamingProfile);

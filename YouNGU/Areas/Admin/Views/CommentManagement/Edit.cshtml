@@ -1,0 +1,169 @@
+﻿@model YouNGU.Areas.Admin.Models.EditCommentViewModel
+@{
+    ViewData["Title"] = "Chỉnh sửa bình luận";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Chỉnh sửa bình luận</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/Admin/Dashboard">Bảng điều khiển</a></li>
+        <li class="breadcrumb-item"><a href="/Admin/CommentManagement">Quản lý bình luận</a></li>
+        <li class="breadcrumb-item active">Chỉnh sửa bình luận</li>
+    </ol>
+
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-edit me-1"></i>
+                    Thông tin bình luận
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Content" class="form-label">Nội dung bình luận</label>
+                            <textarea asp-for="Content" class="form-control" rows="5"></textarea>
+                            <span asp-validation-for="Content" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="IsApproved" id="isApproved">
+                                <label class="form-check-label" for="isApproved">Đã duyệt</label>
+                            </div>
+                            <small class="text-muted">Bình luận chỉ hiển thị cho người dùng khi đã được duyệt.</small>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+                            <div>
+                                <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                    <i class="fas fa-trash me-1"></i> Xóa
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i> Lưu thay đổi
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Thông tin chi tiết
+                </div>
+                <div class="card-body">
+                    <ul class="list-group mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>ID bình luận</span>
+                            <span class="badge bg-primary rounded-pill">@Model.Id</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Trạng thái</span>
+                            @if (Model.IsApproved)
+                            {
+                                <span class="badge bg-success">Đã duyệt</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning">Chưa duyệt</span>
+                            }
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Ngày tạo</span>
+                            <span>@Model.Comment.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                        </li>
+                        @if (Model.Comment.UpdatedAt.HasValue)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Cập nhật lần cuối</span>
+                                <span>@Model.Comment.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                            </li>
+                        }
+                    </ul>
+
+                    @if (Model.Comment.User != null)
+                    {
+                        <div class="card mb-3">
+                            <div class="card-header">Người bình luận</div>
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    @if (!string.IsNullOrEmpty(Model.Comment.User.AvatarPath))
+                                    {
+                                        <img src="@Url.Content(Model.Comment.User.AvatarPath)" alt="@Model.Comment.User.UserName" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                            @(string.IsNullOrEmpty(Model.Comment.User.UserName) ? "?" : Model.Comment.User.UserName.Substring(0, 1).ToUpper())
+                                        </div>
+                                    }
+                                    <div>
+                                        <div class="fw-bold">@Model.Comment.User.UserName</div>
+                                        <small class="text-muted">@Model.Comment.User.Email</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.Comment.Video != null)
+                    {
+                        <div class="card">
+                            <div class="card-header">Video</div>
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    @if (!string.IsNullOrEmpty(Model.Comment.Video.ThumbnailUrl))
+                                    {
+                                        <img src="@Model.Comment.Video.ThumbnailUrl" alt="@Model.Comment.Video.Title" class="me-2" style="width: 80px; height: 45px; object-fit: cover;">
+                                    }
+                                    else if (!string.IsNullOrEmpty(Model.Comment.Video.ThumbnailPath))
+                                    {
+                                        <img src="@Url.Content(Model.Comment.Video.ThumbnailPath)" alt="@Model.Comment.Video.Title" class="me-2" style="width: 80px; height: 45px; object-fit: cover;">
+                                    }
+                                    <div>
+                                        <div class="fw-bold">@Model.Comment.Video.Title</div>
+                                        <a href="/Video/Watch/@Model.Comment.VideoId" target="_blank" class="small">Xem video</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa bình luận này?</p>
+                <p class="text-danger">Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

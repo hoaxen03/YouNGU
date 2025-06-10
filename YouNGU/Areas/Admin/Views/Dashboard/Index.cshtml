@@ -1,147 +1,401 @@
-﻿@* Kế thừa từ ViewModel đã tạo *@
+﻿@using YouNGU.Models.Entities
 @model YouNGU.Areas.Admin.Models.AdminDashboardViewModel
-@* Đặt Layout cho trang này (Layout này sẽ chứa Sidebar) *@
 @{
-    ViewData["Title"] = "Admin Dashboard";
-    // Đảm bảo đường dẫn này đúng với vị trí file _AdminLayout.cshtml của bạn
+    ViewData["Title"] = "Tổng Quan của Quản trị viên";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
-
-    // Hàm trợ giúp định dạng phần trăm thay đổi
-    string FormatPercentage(double percentage)
-    {
-        // Bạn có thể tùy chỉnh định dạng ở đây nếu muốn (ví dụ: làm tròn)
-        return percentage >= 0 ? $"+{percentage:N1}%" : $"{percentage:N1}%"; // Hiển thị 1 chữ số thập phân
-    }
-    // Hàm trợ giúp lấy CSS class cho phần trăm thay đổi (Bootstrap)
-    string GetPercentageClass(double percentage)
-    {
-        return percentage >= 0 ? "text-success" : "text-danger"; // Sử dụng class text-success/text-danger của Bootstrap
-    }
 }
 
-@* Phần nội dung chính của trang Dashboard *@
 <div class="container-fluid px-4">
-    @* Sử dụng container-fluid để chiếm toàn bộ chiều rộng trong main content *@
-    <h2 class="mt-4 mb-4">Dashboard</h2> @* Thêm margin top/bottom cho tiêu đề *@
+    <h1 class="mt-4">Tổng Quan</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item active">Tổng quan</li>
+    </ol>
 
-    @* Stats Cards - Sử dụng Bootstrap Grid và Cards *@
-    <div class="row g-4 mb-4">
-        @* Sử dụng row và gap (g-4) *@
-
-        @* Card Tổng số video *@
-        <div class="col-xl-3 col-md-6">
-            @* Responsive columns *@
-            <div class="card shadow-sm h-100">
-                @* Thêm shadow-sm và h-100 để thẻ cao bằng nhau *@
+    <!-- Stats Cards -->
+    <div class="row">
+        <div class="col-xl-6 col-md-6">
+            <div class="card bg-primary text-white mb-4">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="card-subtitle text-muted text-uppercase small">Tổng số video</h6>
-                        <i class="bi bi-camera-video fs-4 text-primary opacity-75"></i> @* Icon ví dụ *@
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">Tổng số video</h5>
+                            <h2 class="mb-0">@Model.TotalVideos</h2>
+                        </div>
+                        <div>
+                            <i class="fas fa-film fa-3x"></i>
+                        </div>
                     </div>
-                    <h4 class="card-title fw-bold mb-1">@Model.TotalVideos.ToString("N0")</h4>
-                    <small class="@GetPercentageClass(Model.VideoChangePercentage)">
-                        <i class="bi @(Model.VideoChangePercentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
-                        @FormatPercentage(Model.VideoChangePercentage) so với tháng trước
-                    </small>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/Admin/VideoManagement">Xem chi tiết</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                 </div>
             </div>
         </div>
-
-        @* Card Tổng số người dùng *@
-        <div class="col-xl-3 col-md-6">
-            <div class="card shadow-sm h-100">
+        <div class="col-xl-6 col-md-6">
+            <div class="card bg-success text-white mb-4">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="card-subtitle text-muted text-uppercase small">Tổng số người dùng</h6>
-                        <i class="bi bi-people fs-4 text-info opacity-75"></i> @* Icon ví dụ *@
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">Tổng số người dùng</h5>
+                            <h2 class="mb-0">@Model.TotalUsers</h2>
+                        </div>
+                        <div>
+                            <i class="fas fa-users fa-3x"></i>
+                        </div>
                     </div>
-                    <h4 class="card-title fw-bold mb-1">@Model.TotalUsers.ToString("N0")</h4>
-                    <small class="@GetPercentageClass(Model.UserChangePercentage)">
-                        <i class="bi @(Model.UserChangePercentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
-                        @FormatPercentage(Model.UserChangePercentage) so với tháng trước
-                    </small>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/Admin/UserManagement">Xem chi tiết</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                 </div>
             </div>
         </div>
+    </div>
 
-        @* Card Lượt xem *@
-        <div class="col-xl-3 col-md-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="card-subtitle text-muted text-uppercase small">Lượt xem</h6>
-                        <i class="bi bi-eye fs-4 text-warning opacity-75"></i> @* Icon ví dụ *@
-                    </div>
-                    <h4 class="card-title fw-bold mb-1">@Model.TotalViewsFormatted</h4> @* Giữ nguyên định dạng từ ViewModel *@
-                    <small class="@GetPercentageClass(Model.ViewChangePercentage)">
-                        <i class="bi @(Model.ViewChangePercentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
-                        @FormatPercentage(Model.ViewChangePercentage) so với tháng trước
-                    </small>
+    <!-- Video Status Distribution -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie me-1"></i>
+                    Phân Phối Trạng Thái Video
                 </div>
-            </div>
-        </div>
-
-        @* Card Dung lượng lưu trữ *@
-        <div class="col-xl-3 col-md-6">
-            <div class="card shadow-sm h-100">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="card-subtitle text-muted text-uppercase small">Dung lượng lưu trữ</h6>
-                        <i class="bi bi-hdd fs-4 text-danger opacity-75"></i> @* Icon ví dụ *@
+                    <div class="row">
+                        @{
+                            // Define status colors with a safer approach
+                            var getStatusColor = new Func<VideoStatus, string>(status =>
+                            {
+                                return status switch
+                                {
+                                    VideoStatus.Processing => "bg-warning",
+                                    VideoStatus.Published => "bg-success",
+                                    VideoStatus.Private => "bg-secondary",
+                                    VideoStatus.Public => "bg-primary",
+                                    VideoStatus.Unlisted => "bg-info",
+                                    VideoStatus.Deleted => "bg-danger",
+                                    _ => "bg-secondary" // Default color for any undefined status
+                                };
+                            });
+
+                            // Ensure all enum values are represented in the dictionary
+                            foreach (var status in Enum.GetValues(typeof(VideoStatus)).Cast<VideoStatus>())
+                            {
+                                if (!Model.VideoStatusCounts.ContainsKey(status))
+                                {
+                                    Model.VideoStatusCounts[status] = 0;
+                                }
+                            }
+                        }
+
+                        @foreach (var status in Enum.GetValues(typeof(VideoStatus)).Cast<VideoStatus>())
+                        {
+                            <div class="col-md-2 col-sm-4 mb-3">
+                                <div class="card @getStatusColor(status) text-white">
+                                    <div class="card-body py-2 text-center">
+                                        <h5 class="mb-0">@status</h5>
+                                        <h3 class="mb-0">@Model.VideoStatusCounts[status]</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        }
                     </div>
-                    <h4 class="card-title fw-bold mb-1">@Model.StorageUsedFormatted</h4>
-                    <small class="text-danger">
-                        @* Luôn hiển thị màu đỏ cho dung lượng *@
-                        @Model.StorageUsagePercentage% dung lượng đã sử dụng
-                    </small>
-                    @* Optional: Thêm progress bar *@
-                    <div class="progress mt-2" style="height: 5px;">
-                        <div class="progress-bar bg-danger" role="progressbar" style="width: @Model.StorageUsagePercentage%;" aria-valuenow="@Model.StorageUsagePercentage" aria-valuemin="0" aria-valuemax="100"></div>
+
+                    <!-- Add Chart.js visualization -->
+                    <div class="mt-4">
+                        <canvas id="videoStatusChart" height="200"></canvas>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    @* Recent Videos Table - Sử dụng Partial View trong Card *@
-    <div class="card shadow-sm mb-4">
-        @* Bọc bảng trong card *@
-        <div class="card-header">
-            @* Thêm card header *@
-            <i class="bi bi-table me-1"></i> Video mới đăng
+    <!-- Recent Content -->
+    <div class="row">
+        <!-- Recent Videos -->
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-film me-1"></i>
+                    Video mới nhất
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="recentVideosTable">
+                            <thead>
+                                <tr>
+                                    <th>Tiêu đề</th>
+                                    <th>Người dùng</th>
+                                    <th>Trạng thái</th>
+                                    <th>Lượt xem</th>
+                                    <th>Ngày đăng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var video in Model.RecentVideos)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @if (!string.IsNullOrEmpty(video.ThumbnailUrl))
+                                                {
+                                                    <img src="@video.ThumbnailUrl" alt="@video.Title" class="me-2" style="width: 60px; height: 40px; object-fit: cover;">
+                                                }
+                                                else if (!string.IsNullOrEmpty(video.ThumbnailPath))
+                                                {
+                                                    <img src="@Url.Content(video.ThumbnailPath)" alt="@video.Title" class="me-2" style="width: 60px; height: 40px; object-fit: cover;">
+                                                }
+                                                <span class="text-truncate" style="max-width: 150px;">@video.Title</span>
+                                            </div>
+                                        </td>
+                                        <td>@(video.User?.UserName ?? "Unknown")</td>
+                                        <td>
+                                            @{
+                                                var statusClass = video.Status switch
+                                                {
+                                                    VideoStatus.Processing => "badge bg-warning",
+                                                    VideoStatus.Published => "badge bg-success",
+                                                    VideoStatus.Private => "badge bg-secondary",
+                                                    VideoStatus.Public => "badge bg-primary",
+                                                    VideoStatus.Unlisted => "badge bg-info",
+                                                    VideoStatus.Deleted => "badge bg-danger",
+                                                    _ => "badge bg-secondary"
+                                                };
+                                            }
+                                            <span class="@statusClass">@video.Status</span>
+                                        </td>
+                                        <td>@video.ViewCount</td>
+                                        <td>@video.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="/Admin/VideoManagement" class="btn btn-primary">Xem Tất Cả Videos</a>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            @* Render Partial View và truyền danh sách video vào *@
-            @* Quan trọng: Đảm bảo _RecentVideosTable.cshtml cũng sử dụng class Bootstrap *@
-            @await Html.PartialAsync("_RecentVideosTable", Model.RecentVideos)
+
+        <!-- Recent Users -->
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-users me-1"></i>
+                    Người dùng mới nhất
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="recentUsersTable">
+                            <thead>
+                                <tr>
+                                    <th>Tên người dùng</th>
+                                    <th>Email</th>
+                                    <th>Videos</th>
+                                    <th>Đã tham gia</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model.RecentUsers)
+                                {
+                                    if (user != null)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(user.AvatarPath))
+                                                    {
+                                                        <img src="@Url.Content(user.AvatarPath)" alt="@user.UserName" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                            @(string.IsNullOrEmpty(user.FullName) ? (string.IsNullOrEmpty(user.UserName) ? "?" : user.UserName.Substring(0, 1).ToUpper()) : user.FullName.Substring(0, 1).ToUpper())
+                                                        </div>
+                                                    }
+                                                    <div>
+                                                        <div class="fw-bold">@(string.IsNullOrEmpty(user.FullName) ? user.UserName : user.FullName)</div>
+                                                        <small class="text-muted">@user.UserName</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@user.Email</td>
+                                            <td>@(user.Videos?.Count ?? 0)</td>
+                                            <td>@user.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="/Admin/UserManagement" class="btn btn-primary">Xem tất cả người dùng</a>
+                </div>
+            </div>
         </div>
     </div>
 
-    @* Recent Users Table - Sử dụng Partial View trong Card *@
-    <div class="card shadow-sm mb-4">
-        <div class="card-header">
-            <i class="bi bi-table me-1"></i> Người dùng mới đăng ký
-        </div>
-        <div class="card-body">
-            @* Render Partial View và truyền danh sách người dùng vào *@
-            @* Quan trọng: Đảm bảo _RecentUsersTable.cshtml cũng sử dụng class Bootstrap *@
-            @await Html.PartialAsync("_RecentUsersTable", Model.RecentUsers)
+    <!-- Latest Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-clock me-1"></i>
+                    Hoạt động mới nhất
+                </div>
+                <div class="card-body">
+                    <ul class="timeline">
+                        @foreach (var video in Model.RecentVideos.Take(5))
+                        {
+                            <li class="timeline-item mb-3">
+                                <span class="timeline-point timeline-point-primary">
+                                    <i class="fas fa-film"></i>
+                                </span>
+                                <div class="timeline-event">
+                                    <div class="timeline-header">
+                                        <h6 class="mb-0">New Video Uploaded</h6>
+                                        <small class="text-muted">@video.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small>
+                                    </div>
+                                    <div class="d-flex mt-2">
+                                        @if (!string.IsNullOrEmpty(video.ThumbnailUrl))
+                                        {
+                                            <img src="@video.ThumbnailUrl" alt="@video.Title" class="me-2" style="width: 80px; height: 45px; object-fit: cover;">
+                                        }
+                                        else if (!string.IsNullOrEmpty(video.ThumbnailPath))
+                                        {
+                                            <img src="@Url.Content(video.ThumbnailPath)" alt="@video.Title" class="me-2" style="width: 80px; height: 45px; object-fit: cover;">
+                                        }
+                                        <div>
+                                            <p class="mb-0"><strong>@video.Title</strong></p>
+                                            <p class="text-muted mb-0">by @(video.User?.UserName ?? "Unknown")</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 
-</div> @* End container-fluid *@
-
-@* Section Scripts giữ nguyên, không cần thay đổi trừ khi bạn muốn thêm JS cụ thể cho Bootstrap *@
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Ví dụ: Khởi tạo tooltips hoặc popovers của Bootstrap nếu bạn sử dụng chúng
-        // var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        // var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        //   return new bootstrap.Tooltip(tooltipTriggerEl)
-        // })
+        $(document).ready(function() {
+            // Initialize DataTables
+            $('#recentVideosTable').DataTable({
+                paging: false,
+                searching: false,
+                info: false,
+                order: [[4, 'desc']] // Sort by date column descending
+            });
 
-        // Xử lý dropdown menu trong bảng (nếu dùng dropdown của Bootstrap)
-        // Cần đảm bảo các partial view (_RecentVideosTable, _RecentUsersTable)
-        // cũng được cập nhật để sử dụng cấu trúc dropdown của Bootstrap nếu cần JS.
+            $('#recentUsersTable').DataTable({
+                paging: false,
+                searching: false,
+                info: false,
+                order: [[3, 'desc']] // Sort by joined date column descending
+            });
+
+            // Initialize Chart.js for video status distribution
+            var ctx = document.getElementById('videoStatusChart').getContext('2d');
+
+            // Get data from the model
+            var statusLabels = [];
+            var statusData = [];
+            var statusColors = [];
+
+        @foreach (var status in Enum.GetValues(typeof(VideoStatus)).Cast<VideoStatus>())
+        {
+            <text>
+                    statusLabels.push('@status');
+                    statusData.push(@Model.VideoStatusCounts[status]);
+
+                    // Match colors with the cards
+                    var color = '@status' === 'Processing' ? '#ffc107' :
+                                '@status' === 'Published' ? '#198754' :
+                                '@status' === 'Private' ? '#6c757d' :
+                                '@status' === 'Public' ? '#0d6efd' :
+                                '@status' === 'Unlisted' ? '#0dcaf0' :
+                                '@status' === 'Deleted' ? '#dc3545' : '#6c757d';
+
+                    statusColors.push(color);
+            </text>
+        }
+
+            var videoStatusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        data: statusData,
+                        backgroundColor: statusColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        }
+                    }
+                }
+            });
+        });
     </script>
 }
+
+<style>
+    /* Timeline styling */
+    .timeline {
+        position: relative;
+        padding-left: 3rem;
+        margin-bottom: 0;
+        list-style: none;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1rem;
+        border-left: 1px solid #dee2e6;
+    }
+
+        .timeline-item:last-child {
+            border-left-color: transparent;
+        }
+
+    .timeline-point {
+        position: absolute;
+        left: -0.65rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 50%;
+        background-color: #fff;
+    }
+
+    .timeline-point-primary {
+        color: #0d6efd;
+        border: 2px solid #0d6efd;
+    }
+
+    .timeline-event {
+        position: relative;
+        padding-left: 1.5rem;
+    }
+
+    .timeline-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+</style>

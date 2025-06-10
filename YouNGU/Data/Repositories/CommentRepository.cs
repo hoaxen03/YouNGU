@@ -21,16 +21,43 @@ namespace YouNGU.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task AddAsync(Comment comment)
+        public async Task<IEnumerable<Comment>> GetAllAsync()
         {
-            await _context.Comments.AddAsync(comment);
-            await _context.SaveChangesAsync();
+            return await _context.Comments
+                .Include(c => c.User)
+                .Include(c => c.Video)
+                .ToListAsync();
         }
 
-        public async Task UpdateAsync(Comment comment)
+        public async Task<IEnumerable<Comment>> GetAllCommentsForAdminAsync()
         {
-            _context.Comments.Update(comment);
+            return await _context.Comments
+                .Include(c => c.User)
+                .Include(c => c.Video)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<Comment> GetByIdAsync(int id)
+        {
+            return await _context.Comments
+                .Include(c => c.User)
+                .Include(c => c.Video)
+                .FirstOrDefaultAsync(c => c.Id == id);
+        }
+
+        public async Task<Comment> AddAsync(Comment comment)
+        {
+            _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
+            return comment;
+        }
+
+        public async Task<Comment> UpdateAsync(Comment comment)
+        {
+            _context.Entry(comment).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return comment;
         }
 
         public async Task DeleteAsync(int id)
@@ -42,6 +69,25 @@ namespace YouNGU.Data.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<IEnumerable<Comment>> GetCommentsByVideoIdAsync(int videoId)
+        {
+            return await _context.Comments
+                .Include(c => c.User)
+                .Where(c => c.VideoId == videoId && c.IsApproved)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Comment>> GetCommentsByUserIdAsync(string userId)
+        {
+            return await _context.Comments
+                .Include(c => c.Video)
+                .Where(c => c.UserId == userId)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+        }
+
 
     }
 }

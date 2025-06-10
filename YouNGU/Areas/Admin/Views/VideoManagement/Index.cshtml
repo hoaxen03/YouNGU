@@ -1,0 +1,382 @@
+﻿@using YouNGU.Models.Entities
+@model IEnumerable<Video>
+@{
+    ViewData["Title"] = "Quản lý video";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Quản lý video</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/Admin/Dashboard">Bảng điều khiển</a></li>
+        <li class="breadcrumb-item active">Quản lý video</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-film me-1"></i>
+                    Danh sách video
+                </div>
+                <div class="d-flex">
+                    <div class="input-group me-2" style="width: 300px;">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Tìm kiếm video...">
+                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <select id="statusFilter" class="form-select me-2" style="width: 150px;">
+                        <option value="">Tất cả trạng thái</option>
+                        @foreach (var status in Enum.GetValues(typeof(VideoStatus)))
+                        {
+                            <option value="@status">@status.ToString()</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="videosTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Tiêu đề</th>
+                            <th>Người đăng</th>
+                            <th>Danh mục</th>
+                            <th>Trạng thái</th>
+                            <th>Lượt xem</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var video in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        @if (!string.IsNullOrEmpty(video.ThumbnailUrl))
+                                        {
+                                            <img src="@video.ThumbnailUrl" alt="@video.Title" class="me-2 rounded" style="width: 60px; height: 40px; object-fit: cover;">
+                                        }
+                                        else if (!string.IsNullOrEmpty(video.ThumbnailPath))
+                                        {
+                                            <img src="@Url.Content(video.ThumbnailPath)" alt="@video.Title" class="me-2 rounded" style="width: 60px; height: 40px; object-fit: cover;">
+                                        }
+                                        else
+                                        {
+                                            <div class="me-2 rounded bg-secondary d-flex align-items-center justify-content-center" style="width: 60px; height: 40px; object-fit: cover;">
+                                                <i class="fas fa-image text-white"></i>
+                                            </div>
+                                        }
+                                        <span class="text-truncate" style="max-width: 150px;" title="@video.Title">@video.Title</span>
+                                    </div>
+                                </td>
+                                <td>@(video.User?.UserName ?? "Không xác định")</td>
+                                <td>@(video.Category?.Name ?? "Không xác định")</td>
+                                <td class="video-status">
+                                    @{
+                                        var statusClass = video.Status switch
+                                        {
+                                            VideoStatus.Processing => "badge bg-warning text-dark", // Added text-dark for better contrast on warning
+                                            VideoStatus.Published => "badge bg-success",
+                                            VideoStatus.Private => "badge bg-secondary",
+                                            VideoStatus.Public => "badge bg-primary",
+                                            VideoStatus.Unlisted => "badge bg-info text-dark", // Added text-dark for better contrast on info
+                                            VideoStatus.Deleted => "badge bg-danger",
+                                            _ => "badge bg-light text-dark" // Default with better contrast
+                                        };
+                                    }
+                                    <span class="@statusClass">@video.Status</span>
+                                </td>
+                                <td>@video.ViewCount</td>
+                                <td>@video.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <a asp-action="Edit" asp-route-id="@video.Id" class="btn btn-sm btn-outline-primary me-2 rounded-pill" title="Sửa">
+                                            <i class="fas fa-edit"></i> Sửa
+                                        </a>
+                                        @if (video.Status == VideoStatus.Processing)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-success me-2 rounded-pill quick-approve-btn"
+                                                    onclick="quickApproveVideo(@video.Id, this, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(video.Title))')"
+                                                    title="Phê duyệt nhanh">
+                                                <i class="fas fa-check"></i> Phê duyệt
+                                            </button>
+                                        }
+                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal"
+                                                data-video-id="@video.Id"
+                                                data-video-title="@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(video.Title))"
+                                                title="Xóa">
+                                            <i class="fas fa-trash"></i> Xóa
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-3 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel"><i class="fas fa-exclamation-triangle me-2"></i>Xác nhận xóa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa video "<strong id="deleteVideoTitle"></strong>"?</p>
+                <p class="text-danger fw-bold">Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Hủy</button>
+                <form id="deleteForm" method="post" class="d-inline">
+                    <input type="hidden" id="deleteVideoId" name="id" />
+                    @Html.AntiForgeryToken() <button type="submit" class="btn btn-danger rounded-pill"><i class="fas fa-trash-alt me-1"></i>Xóa vĩnh viễn</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="quickApproveConfirmModal" tabindex="-1" aria-labelledby="quickApproveConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-3 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="quickApproveConfirmModalLabel"><i class="fas fa-question-circle me-2"></i>Xác nhận phê duyệt</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn phê duyệt video "<strong id="quickApproveVideoTitle" class="text-primary"></strong>"?</p>
+                <p>Video sẽ được chuyển sang trạng thái <span class="badge bg-primary">Public</span>.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-success rounded-pill" onclick="executeConfirmedQuickApprove()"><i class="fas fa-check-circle me-1"></i>Phê duyệt</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="appMessageModal" tabindex="-1" aria-labelledby="appMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-3 shadow">
+            <div class="modal-header" id="appMessageModalHeader">
+                <h5 class="modal-title" id="appMessageModalLabel">Thông báo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="appMessageModalBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary rounded-pill" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        // Store these globally for the modal confirmation flow
+        let videoIdForApproval = null;
+        let buttonElementForApproval = null;
+
+        // Function to show a generic application message modal
+        function showAppMessage(title, message, isSuccess) {
+            const messageModalElement = document.getElementById('appMessageModal');
+            const messageModalHeader = document.getElementById('appMessageModalHeader');
+            const messageModalLabel = document.getElementById('appMessageModalLabel');
+            const messageModalBody = document.getElementById('appMessageModalBody');
+
+            // Ensure Bootstrap Modal instance is correctly retrieved or created
+            let appModalInstance = bootstrap.Modal.getInstance(messageModalElement);
+            if (!appModalInstance) {
+                appModalInstance = new bootstrap.Modal(messageModalElement);
+            }
+
+            messageModalLabel.innerHTML = (isSuccess ? '<i class="fas fa-check-circle me-2"></i>' : '<i class="fas fa-times-circle me-2"></i>') + title;
+            messageModalBody.textContent = message;
+
+            if (isSuccess) {
+                messageModalHeader.classList.remove('bg-danger', 'bg-warning');
+                messageModalHeader.classList.add('bg-success', 'text-white');
+            } else {
+                messageModalHeader.classList.remove('bg-success', 'bg-warning');
+                messageModalHeader.classList.add('bg-danger', 'text-white');
+            }
+
+            appModalInstance.show();
+        }
+
+        // Called by the "Phê duyệt" button in the table row
+        // Prepares and shows the confirmation modal
+        function quickApproveVideo(videoId, button, videoTitle) {
+            videoIdForApproval = videoId;
+            buttonElementForApproval = button; // This is the button from the table row
+
+            document.getElementById('quickApproveVideoTitle').textContent = videoTitle;
+
+            const confirmModalElement = document.getElementById('quickApproveConfirmModal');
+            let confirmModalInstance = bootstrap.Modal.getInstance(confirmModalElement);
+            if (!confirmModalInstance) {
+                confirmModalInstance = new bootstrap.Modal(confirmModalElement);
+            }
+            confirmModalInstance.show();
+        }
+
+        // Called by the "Phê duyệt" button IN THE CONFIRMATION MODAL
+        // Executes the actual approval process
+        function executeConfirmedQuickApprove() {
+            if (!videoIdForApproval || !buttonElementForApproval) {
+                console.error("Video ID or button element not set for approval.");
+                showAppMessage('Lỗi hệ thống', 'Không thể xử lý yêu cầu. Vui lòng thử lại hoặc tải lại trang.', false);
+                return;
+            }
+
+            const videoId = videoIdForApproval;
+            const originalButtonInRow = buttonElementForApproval; // Renaming for clarity
+
+            // Hide confirmation modal
+            const confirmModalEl = document.getElementById('quickApproveConfirmModal');
+            const confirmModalInstance = bootstrap.Modal.getInstance(confirmModalEl);
+            if (confirmModalInstance) {
+                confirmModalInstance.hide();
+            }
+
+            // Disable the original button in the row and show spinner
+            originalButtonInRow.disabled = true;
+            originalButtonInRow.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang duyệt...';
+
+            fetch('/Admin/VideoManagement/QuickApprove/' + videoId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // Attempt to parse JSON error from server, otherwise use statusText
+                    return response.json().catch(() => ({ success: false, message: `Lỗi máy chủ: ${response.statusText} (${response.status})` }))
+                                   .then(errData => { throw errData; }); // Throw to be caught by .catch
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const row = originalButtonInRow.closest('tr');
+                    if (row) {
+                        const statusCell = row.querySelector('.video-status');
+                        if (statusCell) {
+                            statusCell.innerHTML = '<span class="badge bg-primary">Public</span>';
+                        }
+                    }
+
+                    // Remove the original approve button from the row
+                    originalButtonInRow.remove();
+
+                    showAppMessage('Thành công!', 'Video đã được phê duyệt thành công và chuyển sang trạng thái Public.', true);
+
+                    // Optional: DataTable refresh for full consistency if other operations depend on it
+                    // var table = $('#videosTable').DataTable();
+                    // if (table && row) {
+                    //    table.row(row).invalidate().draw(false); // 'false' preserves pagination
+                    // }
+
+                } else {
+                    showAppMessage('Lỗi phê duyệt', data.message || 'Không thể phê duyệt video. Vui lòng thử lại.', false);
+                    originalButtonInRow.disabled = false; // Re-enable button on failure
+                    originalButtonInRow.innerHTML = '<i class="fas fa-check"></i> Phê duyệt';
+                }
+            })
+            .catch(error => {
+                console.error('Error during quick approve:', error);
+                let errorMessage = 'Đã xảy ra lỗi không xác định khi cố gắng phê duyệt video.';
+                if (error && error.message) {
+                    errorMessage = error.message;
+                } else if (typeof error === 'string' && error.length > 0) {
+                    errorMessage = error;
+                }
+                showAppMessage('Lỗi hệ thống', errorMessage, false);
+
+                // Ensure button is re-enabled if it still exists and an error occurred
+                if (originalButtonInRow) {
+                     originalButtonInRow.disabled = false;
+                     originalButtonInRow.innerHTML = '<i class="fas fa-check"></i> Phê duyệt';
+                }
+            })
+            .finally(() => {
+                // Clear stored values after operation
+                videoIdForApproval = null;
+                buttonElementForApproval = null;
+            });
+        }
+
+        // Existing DataTable and other scripts
+        $(document).ready(function() {
+            var table = $('#videosTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/vi.json',
+                    paginate: {
+                        previous: '<i class="fas fa-chevron-left"></i>',
+                        next: '<i class="fas fa-chevron-right"></i>'
+                    }
+                },
+                responsive: true,
+                order: [[5, 'desc']], // Sort by 'Ngày tạo' (index 5) descending
+                columnDefs: [
+                    { orderable: false, targets: 6 } // Disable sorting for 'Thao tác' column (index 6)
+                ],
+                // Styling options for Bootstrap 5
+                dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                     "<'row'<'col-sm-12'tr>>" +
+                     "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                pagingType: "full_numbers"
+            });
+
+            // Search functionality
+            $('#searchButton').on('click', function() {
+                table.search($('#searchInput').val()).draw();
+            });
+
+            $('#searchInput').on('keyup', function(e) {
+                if (e.key === 'Enter' || $(this).val() === '') { // Search on enter or when cleared
+                    table.search($(this).val()).draw();
+                }
+            });
+
+            // Status filter
+            $('#statusFilter').on('change', function() {
+                var status = $(this).val();
+                // Search in column 3 (Trạng thái) for the selected status
+                // Using regex to match whole word for status
+                if (status) {
+                    table.column(3).search('^' + status + '$', true, false).draw();
+                } else {
+                    table.column(3).search('').draw(); // Clear search for the column
+                }
+            });
+
+            // Delete modal setup
+            $('#deleteModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var videoId = button.data('video-id');
+                var videoTitle = button.data('video-title');
+
+                var modal = $(this);
+                modal.find('#deleteVideoId').val(videoId);
+                modal.find('#deleteVideoTitle').text(videoTitle);
+
+                // Update form action dynamically
+                modal.find('#deleteForm').attr('action', '/Admin/VideoManagement/Delete/' + videoId);
+            });
+        });
+    </script>
+}

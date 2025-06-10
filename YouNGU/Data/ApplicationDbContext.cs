@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Emit;
+using YouNGU.Models;
 using YouNGU.Models.Entities;
 
 namespace YouNGU.Data
@@ -21,6 +22,10 @@ namespace YouNGU.Data
         public DbSet<PlaylistVideo> PlaylistVideos { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<VideoTag> VideoTags { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Setting> Settings { get; set; }
+        public DbSet<Log> Logs { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

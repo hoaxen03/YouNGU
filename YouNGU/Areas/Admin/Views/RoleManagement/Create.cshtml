@@ -1,0 +1,66 @@
+﻿@model YouNGU.Areas.Admin.Models.CreateRoleViewModel
+@{
+    ViewData["Title"] = "Thêm vai trò mới";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Thêm vai trò mới</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/Admin/Dashboard">Bảng điều khiển</a></li>
+        <li class="breadcrumb-item"><a href="/Admin/RoleManagement">Quản lý vai trò</a></li>
+        <li class="breadcrumb-item active">Thêm vai trò mới</li>
+    </ol>
+
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-plus me-1"></i>
+                    Thông tin vai trò
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Tên vai trò</label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Lưu
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Hướng dẫn
+                </div>
+                <div class="card-body">
+                    <p>Vai trò giúp phân quyền cho người dùng trên nền tảng YouNGU.</p>
+                    <p>Mỗi vai trò đại diện cho một tập hợp các quyền truy cập và thao tác.</p>
+                    <p>Tên vai trò nên ngắn gọn, dễ hiểu và không trùng lặp với các vai trò khác.</p>
+                    <p>Ví dụ về các vai trò phổ biến:</p>
+                    <ul>
+                        <li>Admin - Quản trị viên với toàn quyền</li>
+                        <li>Moderator - Người kiểm duyệt nội dung</li>
+                        <li>Editor - Người biên tập nội dung</li>
+                        <li>User - Người dùng thông thường</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

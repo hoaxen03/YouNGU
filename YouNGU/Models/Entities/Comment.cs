@@ -7,6 +7,10 @@
         public int VideoId { get; set; }
         public string UserId { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+
+        public bool IsApproved { get; set; }
+
 
         // Navigation properties
         public Video Video { get; set; }

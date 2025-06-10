@@ -5,12 +5,10 @@ using System.Security.Claims;
 using YouNGU.Data.Repositories;
 using YouNGU.Models.Entities;
 using YouNGU.Models.ViewModels;
+using YouNGU.Models;
 using YouNGU.Services;
-using Microsoft.Extensions.Configuration;
-using YouNGU.Areas.Admin.Models;
-using Microsoft.Extensions.Logging; // Thêm using cho ILogger
-using Microsoft.AspNetCore.Http; // Thêm using cho StatusCodes
 using EditVideoViewModel = YouNGU.Models.ViewModels.EditVideoViewModel;
+using Azure.Core;
 
 namespace YouNGU.Controllers
 {
@@ -114,32 +112,55 @@ namespace YouNGU.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> AddComment(int videoId, string content)
+        public async Task<IActionResult> AddComment([FromBody] AddCommentRequest request)
         {
-            if (string.IsNullOrEmpty(content))
+            if (string.IsNullOrWhiteSpace(request.Content))
             {
-                return BadRequest("Nội dung bình luận không được để trống");
+                return BadRequest(new { success = false, message = "Nội dung bình luận không được để trống" });
             }
 
             var comment = new Comment
             {
-                VideoId = videoId,
+                VideoId = request.VideoId,
                 UserId = User.FindFirstValue(ClaimTypes.NameIdentifier),
-                Content = content,
+                Content = request.Content,
                 CreatedAt = DateTime.UtcNow
             };
 
             await _commentRepository.AddAsync(comment);
-            return RedirectToAction(nameof(Watch), new { id = videoId });
-        }
 
+            // Trả về JSON cho client AJAX
+            return Ok(new
+            {
+                success = true,
+                comment = new
+                {
+                    avatarPath = comment.User?.AvatarPath, // Nếu có
+                    userName = comment.User?.UserName,
+                    userFullName = comment.User?.FullName,
+                    content = comment.Content,
+                    formattedCreatedAt = comment.CreatedAt
+                }
+            });
+        }
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> ToggleLike(int videoId)
         {
+            // Kiểm tra video có tồn tại không
+            var video = await _videoRepository.GetByIdAsync(videoId);
+            if (video == null)
+            {
+                return NotFound(new { success = false, message = "Video không tồn tại." });
+            }
+
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             await _likeRepository.ToggleLikeAsync(videoId, userId);
-            return RedirectToAction(nameof(Watch), new { id = videoId });
+
+            // Có thể trả về JSON thay vì Redirect nếu dùng AJAX
+            var likeCount = video.Likes?.Count(l => l.IsLike) ?? 0;
+            var isLiked = await _likeRepository.HasUserLikedVideoAsync(userId, videoId);
+            return Ok(new { success = true, likeCount, isLiked });
         }
         [HttpGet]
         [Authorize]
@@ -161,25 +182,15 @@ namespace YouNGU.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken] // Giữ lại vì AJAX có gửi token
-        // Cân nhắc thêm các attribute giới hạn kích thước nếu chưa đặt toàn cục
-        // [RequestSizeLimit(524288000)] // 500 MB
-        // [RequestFormLimits(MultipartBodyLengthLimit = 524288000)]
         public async Task<IActionResult> Upload(UploadVideoViewModel model)
         {
             _logger.LogInformation("Upload POST method called for video title: {Title}", model?.Title ?? "N/A");
 
-            // --- KIỂM TRA FILE NULL TRƯỚC ---
-            // Kết hợp kiểm tra cả video và thumbnail nếu thumbnail là bắt buộc
             if (model.VideoFile == null || model.VideoFile.Length == 0)
             {
                 _logger.LogWarning("Upload attempt failed: Video file is missing.");
-                // Trả về lỗi BadRequest JSON thay vì View
                 return BadRequest(new { success = false, message = "Vui lòng chọn file video." });
             }
-            // Bỏ kiểm tra ThumbnailFile == null ở đây nếu nó không bắt buộc
-            // Nếu bắt buộc, thêm: || model.ThumbnailFile == null || model.ThumbnailFile.Length == 0
-
-            // --- KIỂM TRA MODELSTATE (SAU KHI ĐÃ CÓ FILE) ---
             // Xóa lỗi Categories nếu có (vì nó không được submit từ form AJAX theo cách thông thường)
             ModelState.Remove("Categories");
             if (!ModelState.IsValid)

@@ -1,0 +1,80 @@
+﻿@model YouNGU.Models.Entities.Video
+
+@{
+    ViewData["Title"] = "Xóa video";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Xóa video</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/Admin/Dashboard">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="/Admin/VideoManagement">Quản lý video</a></li>
+        <li class="breadcrumb-item active">Xóa video</li>
+    </ol>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-trash-alt me-1"></i>
+            Xác nhận xóa
+        </div>
+        <div class="card-body">
+            <div class="alert alert-danger">
+                <h5>Bạn có chắc chắn muốn xóa video này không?</h5>
+                <p>Hành động này không thể hoàn tác và sẽ xóa video khỏi hệ thống.</p>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Thông tin video</h5>
+                            <div class="mb-2">
+                                <strong>ID:</strong> @Model.Id
+                            </div>
+                            <div class="mb-2">
+                                <strong>Tiêu đề:</strong> @Model.Title
+                            </div>
+                            <div class="mb-2">
+                                <strong>Mô tả:</strong> @(string.IsNullOrEmpty(Model.Description) ? "Không có mô tả" : Model.Description)
+                            </div>
+                            <div class="mb-2">
+                                <strong>Ngày tạo:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")
+                            </div>
+                            <div class="mb-2">
+                                <strong>Người đăng:</strong> @(Model.User?.UserName ?? "Không xác định")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="ratio ratio-16x9">
+                        <video controls>
+                            <source src="@(Model.CloudinaryUrl ?? Url.Content(Model.VideoPath))" type="video/mp4">
+                            Trình duyệt của bạn không hỗ trợ thẻ video.
+                        </video>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="DeleteConfirmed" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Quay lại
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-1"></i> Xóa video
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

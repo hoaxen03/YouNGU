@@ -9,8 +9,9 @@ namespace YouNGU.Services
     {
         private readonly Cloudinary _cloudinary;
         private readonly string _watermarkPublicId;
+        private readonly ILogger<CloudinaryService> _logger;
 
-        public CloudinaryService(IConfiguration configuration)
+        public CloudinaryService(IConfiguration configuration, ILogger<CloudinaryService> logger)
         {
             var account = new Account(
                 configuration["Cloudinary:CloudName"],
@@ -19,7 +20,9 @@ namespace YouNGU.Services
 
             _cloudinary = new Cloudinary(account);
             _cloudinary.Api.Secure = true;
+            _cloudinary.Api.Timeout = 300000;
             _watermarkPublicId = configuration["Cloudinary:WatermarkPublicId"];
+            _logger = logger;
         }
         public async Task<CloudinaryUploadResult> UploadImageAsync(IFormFile file)
         {
@@ -234,6 +237,27 @@ namespace YouNGU.Services
                 return null;
 
             return _cloudinary.Api.UrlImgUp.BuildUrl(videoPublicId);
+        }
+
+        public async Task DeleteVideoAsync(string publicId)
+        {
+            if (string.IsNullOrEmpty(publicId))
+            {
+                throw new ArgumentException("PublicId không được để trống");
+            }
+
+            var deleteParams = new DeletionParams(publicId)
+            {
+                ResourceType = ResourceType.Video
+            };
+
+            var result = await _cloudinary.DestroyAsync(deleteParams);
+
+            if (result.Result != "ok")
+            {
+                _logger.LogWarning("Không thể xóa video từ Cloudinary: {PublicId}, Kết quả: {Result}", publicId, result.Result);
+                throw new Exception($"Không thể xóa video từ Cloudinary: {result.Result}");
+            }
         }
     }
 

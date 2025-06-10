@@ -1,0 +1,81 @@
+﻿@model YouNGU.Models.Entities.Category
+@{
+    ViewData["Title"] = "Thêm danh mục mới";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Thêm danh mục mới</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/Admin/Dashboard">Bảng điều khiển</a></li>
+        <li class="breadcrumb-item"><a href="/Admin/CategoryManagement">Quản lý danh mục</a></li>
+        <li class="breadcrumb-item active">Thêm danh mục mới</li>
+    </ol>
+
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-plus me-1"></i>
+                    Thông tin danh mục
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Tên danh mục</label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Mô tả</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Lưu
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Hướng dẫn
+                </div>
+                <div class="card-body">
+                    <p>Danh mục giúp phân loại video trên nền tảng YouNGU.</p>
+                    <p>Mỗi video chỉ thuộc về một danh mục.</p>
+                    <p>Tên danh mục nên ngắn gọn, dễ hiểu và không trùng lặp với các danh mục khác.</p>
+                    <p>Mô tả danh mục giúp người dùng hiểu rõ hơn về nội dung của danh mục.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Form validation
+            $('form').on('submit', function() {
+                if (!$('#Name').val()) {
+                    alert('Vui lòng nhập tên danh mục.');
+                    return false;
+                }
+                return true;
+            });
+        });
+    </script>
+}

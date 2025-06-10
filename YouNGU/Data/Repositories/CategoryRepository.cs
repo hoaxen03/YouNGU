@@ -14,24 +14,30 @@ namespace YouNGU.Data.Repositories
 
         public async Task<IEnumerable<Category>> GetAllAsync()
         {
-            return await _context.Categories.ToListAsync();
+            return await _context.Categories
+                .Include(c => c.Videos)
+                .ToListAsync();
         }
 
         public async Task<Category> GetByIdAsync(int id)
         {
-            return await _context.Categories.FindAsync(id);
+            return await _context.Categories
+                .Include(c => c.Videos)
+                .FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public async Task AddAsync(Category category)
+        public async Task<Category> AddAsync(Category category)
         {
-            await _context.Categories.AddAsync(category);
+            _context.Categories.Add(category);
             await _context.SaveChangesAsync();
+            return category;
         }
 
-        public async Task UpdateAsync(Category category)
+        public async Task<Category> UpdateAsync(Category category)
         {
-            _context.Categories.Update(category);
+            _context.Entry(category).State = EntityState.Modified;
             await _context.SaveChangesAsync();
+            return category;
         }
 
         public async Task DeleteAsync(int id)

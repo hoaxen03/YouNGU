@@ -1,0 +1,63 @@
+﻿@using YouNGU.Models.Entities
+@model List<YouNGU.Models.Entities.Notification>
+@{
+    ViewData["Title"] = "Thông Báo";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h1>Thông Báo</h1>
+                    <form asp-action="MarkAllAsRead" method="post">
+                        <button type="submit" class="btn btn-outline-primary">Đánh dấu tất cả đã đọc</button>
+                    </form>
+                </div>
+                <div class="card-body">
+                    @if (Model != null && Model.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var notification in Model)
+                            {
+                                <a href="@notification.Link" class="list-group-item list-group-item-action @(notification.IsRead ? "" : "active")">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">@notification.Title</h5>
+                                        <small>@notification.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                                    </div>
+                                    <p class="mb-1">@notification.Message</p>
+                                    <small>
+                                        @switch (notification.Type)
+                                        {
+                                            case NotificationType.Interaction:
+                                                <span class="badge badge-primary">Tương tác</span>
+                                                break;
+                                            case NotificationType.Subscription:
+                                                <span class="badge badge-success">Đăng ký</span>
+                                                break;
+                                            case NotificationType.NewContent:
+                                                <span class="badge badge-info">Nội dung mới</span>
+                                                break;
+                                            case NotificationType.System:
+                                                <span class="badge badge-secondary">Hệ thống</span>
+                                                break;
+                                            case NotificationType.Achievement:
+                                                <span class="badge badge-warning">Thành tựu</span>
+                                                break;
+                                        }
+                                    </small>
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <p>Bạn không có thông báo nào.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
